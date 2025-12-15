@@ -15,6 +15,10 @@ struct cubeObjectType {
 	uint tex56;
 	vec3 color;
 	float transparency;
+	float storage1;
+	float storage2;
+	float storage3;
+	float storage4;
 };
 
 layout(std430, binding = 5) buffer InstanceData {

@@ -20,7 +20,7 @@ public:
 
 	inline LuaVector GetSize() { return LuaVector(Primitive->Size.x, Primitive->Size.y, Primitive->Size.z); }
 
-	inline void SetSize(LuaVector NewSize) { Primitive->Size = glm::vec3(NewSize.x, NewSize.y, NewSize.z); }
+	inline void SetSize(LuaVector NewSize) { Primitive->Size = glm::vec3(NewSize.x, NewSize.y, NewSize.z); Primitive->SizeLength = glm::length(Primitive->Size) * 0.5;  }
 
 	inline LuaVector GetColor() { return LuaVector(Primitive->Color.r, Primitive->Color.g, Primitive->Color.b); }
 
@@ -172,7 +172,7 @@ public:
 	Part() {
 		Type = "Part";
 		Name = "Part";
-		Primitive->Size = { 2.0, 1.0, 3.0 };
+		SetSize({ 2.0, 1.0, 3.0 });
 		Primitive->Color = { 1.0, 1.0, 1.0 };
 		Primitive->Transparency = 1.0;
 		Shape = "Cube";

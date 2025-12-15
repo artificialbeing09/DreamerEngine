@@ -41,40 +41,36 @@ namespace Graphics::Engine3D {
             auto Planes = Camera::ExtractFrustumPlanes();
 
             for (const auto& [key, ObjectList] : RenderObjects) {
-                vector<pair<float, RenderCubeObject_t>> Visible;
+                vector<RenderCubeObject_t> Visible;
                 vector<RenderCubeObject_t> Opaque;
 
                 Visible.reserve(ObjectList.size());
                 Opaque.reserve(ObjectList.size());
 
-                for (const auto& Lp : ObjectList) {
+                glm::vec3 CameraPos = Camera::Position;
+
+                for (auto& Lp : ObjectList) {
                     auto L = Lp.Object;
 
-                    if (Camera::IsSphereVisible(L.Position, glm::length(L.Size) * 0.5f, Planes)) {
-                        if (L.Transparency < 0.99f) {
-                            glm::vec3 toCamera = L.Position - Camera::Position;
-                            float distSq = glm::dot(toCamera, toCamera);
-                            Visible.emplace_back(distSq, L);
-                        }
-                        else {
-                            Opaque.emplace_back(L);
-                        }
+                    if (!Camera::IsSphereVisible(L.Position, L.SizeLength, Planes))
+                        continue;
+
+                    if (L.Transparency < 0.99f) {
+                        glm::vec3 toCamera = L.Position - CameraPos;
+                        float distSq = glm::dot(toCamera, toCamera);
+                        L.Storage2 = distSq;
+                        Visible.emplace_back(L);
+                    }
+                    else {
+                        Opaque.emplace_back(L);
                     }
                 }
 
                 std::sort(Visible.begin(), Visible.end(),
-                    [](const auto& a, const auto& b) { return a.first > b.first; });
+                    [](const auto& a, const auto& b) { return a.Storage2 > b.Storage2; });
 
                 FilteredRenderObjects[key] = move(Opaque);
-                
-                {
-                    auto& TRenderList = FilteredTransparentRenderObjects[key];
-                    TRenderList.clear();
-                    TRenderList.reserve(Visible.size());
-
-                    for (auto& [dist, obj] : Visible)
-                        TRenderList.push_back(obj);
-                }
+                FilteredTransparentRenderObjects[key] = move(Visible);
             }
 
             for (const auto& [key, ObjectList] : FilteredRenderObjects) {

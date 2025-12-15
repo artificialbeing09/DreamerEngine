@@ -19,6 +19,10 @@ struct RenderCubeObject_t {
     uint16_t Texture5 = 0;
     glm::vec3 Color = glm::vec3(0.0, 0.0, 0.0);
     float Transparency = 0.0;
+    float SizeLength = 2;
+    float Storage2 = 2;
+    float Storage3 = 0;
+    float Storage4 = 0;
 };
 
 struct LightObject_t {
