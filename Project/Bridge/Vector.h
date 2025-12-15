@@ -1,0 +1,194 @@
+#pragma once
+
+#include "../Graphics/Internal/Graphics.h"
+#include "Lua/lua.hpp"
+#include <functional>
+#include <map>
+#include <string>
+#include <stdexcept>
+
+using namespace std;
+
+struct LuaVector {
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double a = 0;
+};
+
+static int lua_pushvector(lua_State* L, LuaVector v) {
+    LuaVector* udata = (LuaVector*)lua_newuserdata(L, sizeof(LuaVector));
+    *udata = v;
+
+    luaL_getmetatable(L, "Vector");
+    lua_setmetatable(L, -2);
+
+    return 1;
+}
+
+LuaVector luaL_checkvector(lua_State* L, int index) {
+    return *(LuaVector*)luaL_checkudata(L, index, "Vector");
+}
+
+namespace Vector {
+    static int l_Vector_new(lua_State* L) {
+        double X = lua_tonumber(L, 1);
+        double Y = lua_tonumber(L, 2);
+        double Z = lua_tonumber(L, 3);
+        double A = lua_tonumber(L, 4);
+
+        lua_pushvector(L, { X, Y, Z, A });
+        return 1;
+    }
+
+    static int l_Vector_index(lua_State* L) {
+        LuaVector obj = luaL_checkvector(L, 1);
+        const char* ckey = luaL_checkstring(L, 2);
+        string key = ckey;
+        string lkey = Utils::StrToLower(key);
+
+        if (lkey == "x") {
+            lua_pushnumber(L, obj.x);
+        }
+        else if (lkey == "y") {
+            lua_pushnumber(L, obj.y);
+        }
+        else if (lkey == "z") {
+            lua_pushnumber(L, obj.z);
+        }
+        else if (lkey == "a") {
+            lua_pushnumber(L, obj.a);
+        }
+        else {
+            lua_pushnil(L);
+        }
+
+        return 1;
+    }
+
+    static int l_Vector_eq(lua_State* L) {
+        LuaVector obj = luaL_checkvector(L, 1);
+        LuaVector obj2 = luaL_checkvector(L, 2);
+
+        lua_pushboolean(L, memcmp(&obj, &obj2, sizeof(obj)) == 0);
+
+        return 1;
+    }
+
+    static int l_Vector_add(lua_State* L) {
+        LuaVector obj = luaL_checkvector(L, 1);
+        LuaVector obj2 = luaL_checkvector(L, 2);
+
+        lua_pushvector(L, { obj.x + obj2.x, obj.y + obj2.y, obj.z + obj2.z, obj.a + obj2.a });
+
+        return 1;
+    }
+
+    static int l_Vector_sub(lua_State* L) {
+        LuaVector obj = luaL_checkvector(L, 1);
+        LuaVector obj2 = luaL_checkvector(L, 2);
+
+        lua_pushvector(L, { obj.x - obj2.x, obj.y - obj2.y, obj.z - obj2.z, obj.a - obj2.a });
+
+        return 1;
+    }
+
+    static int l_Vector_mul(lua_State* L) {
+        LuaVector obj = luaL_checkvector(L, 1);
+
+        if (lua_type(L, 2) == LUA_TNUMBER) {
+            double obj2 = luaL_checknumber(L, 2);
+
+            lua_pushvector(L, { obj.x * obj2, obj.y * obj2, obj.z * obj2, obj.a * obj2 });
+
+            return 1;
+        }
+
+        LuaVector obj2 = luaL_checkvector(L, 2);
+
+        lua_pushvector(L, { obj.x * obj2.x, obj.y * obj2.y, obj.z * obj2.z, obj.a * obj2.a });
+
+        return 1;
+    }
+
+    static int l_Vector_div(lua_State* L) {
+        LuaVector obj = luaL_checkvector(L, 1);
+
+        if (lua_type(L, 2) == LUA_TNUMBER) {
+            double obj2 = luaL_checknumber(L, 2);
+
+            lua_pushvector(L, { obj.x / obj2, obj.y / obj2, obj.z / obj2, obj.a / obj2 });
+
+            return 1;
+        }
+
+        LuaVector obj2 = luaL_checkvector(L, 2);
+
+        lua_pushvector(L, { obj.x / obj2.x, obj.y / obj2.y, obj.z / obj2.z, obj.a / obj2.a });
+
+        return 1;
+    }
+
+    static int l_Vector_unm(lua_State* L) {
+        LuaVector obj = luaL_checkvector(L, 1);
+
+        lua_pushvector(L, { -obj.x, -obj.y, -obj.z, -obj.a });
+
+        return 1;
+    }
+
+    static int l_Vector_tostring(lua_State* L) {
+        LuaVector obj = luaL_checkvector(L, 1);
+
+        string S = to_string(obj.x) + ", " + to_string(obj.y) + ", " + to_string(obj.z) + to_string(obj.a);
+
+        lua_pushstring(L, S.c_str());
+
+        return 1;
+    }
+
+    int luaopen_vector(lua_State* L) {
+        luaL_newmetatable(L, "Vector");
+
+        lua_pushstring(L, "__index");
+        lua_pushcfunction(L, l_Vector_index);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__eq");
+        lua_pushcfunction(L, l_Vector_eq);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__add");
+        lua_pushcfunction(L, l_Vector_add);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__sub");
+        lua_pushcfunction(L, l_Vector_sub);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__mul");
+        lua_pushcfunction(L, l_Vector_mul);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__div");
+        lua_pushcfunction(L, l_Vector_div);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__unm");
+        lua_pushcfunction(L, l_Vector_unm);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__tostring");
+        lua_pushcfunction(L, l_Vector_tostring);
+        lua_settable(L, -3);
+
+        lua_pop(L, 1);
+
+        lua_register(L, "Vector", l_Vector_new);
+        lua_register(L, "vector", l_Vector_new);
+        lua_register(L, "Vector3", l_Vector_new);
+        lua_register(L, "vector3", l_Vector_new);
+
+        return 1;
+    }
+}
