@@ -1,7 +1,3 @@
-# OpenGLTest
-
-Private game engine project.
-
 # TODO
 
 1. Shadows (better shaders)
