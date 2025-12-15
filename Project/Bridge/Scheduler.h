@@ -14,6 +14,9 @@ namespace Scheduler {
         int returnValues = 0; // number of values to return after yielding
         void* storage = NULL;
         std::function<void(lua_State*, void*)> returnFunction = [](...) {};
+
+        void* yieldStorage = NULL;
+        std::function<bool(void*)> yieldFunction = [](...) { return true; };
     };
 
     class SchedulerT {
@@ -41,6 +44,10 @@ namespace Scheduler {
             lua_State* L = pair.first;
             SchedulerYieldValue state = pair.second;
 
+            if (state.cState == 2)
+                if (state.yieldFunction(state.yieldStorage))
+                    state.cState = 1;
+
             if (state.cState == 1) {
                 int nres = 0;
 
@@ -52,6 +59,7 @@ namespace Scheduler {
 
                         Scheduler->Threads[L].returnValues = 0;
                         state.returnFunction = [](...) {};
+                        state.yieldFunction = [](...) { return true; };
                     }
 
                     status = lua_resume(L, 0, state.returnValues, &nres);
@@ -87,18 +95,45 @@ namespace Scheduler {
             S->Threads[L].cState = 2;
             S->Threads[L].returnFunction = [](lua_State* myState, void* storage) {
                 lua_pushboolean(myState, 1);
+                lua_pushboolean(myState, 1);
             };
             S->Threads[L].returnValues = 1;
 
-            thread t([](lua_State* state, long TimeM) {
-                auto S = GetScheduler();
+            if (TimeMilli == 0) {
+                S->Threads[L].cState = 1;
+            }
+            else {
+                struct SleepYield {
+                    long long Start = 0;
+                    long long Length = 0;
+                };
 
-                this_thread::sleep_for(chrono::milliseconds(TimeM));
+                auto StartTime = Utils::GetMilliseconds();
 
-                S->Threads[state].cState = 1;
-                }, L, TimeMilli);
+                SleepYield* Storage = new SleepYield;
+                Storage->Start = StartTime;
+                Storage->Length = TimeMilli;
 
-            t.detach();
+                S->Threads[L].yieldStorage = Storage;
+
+                S->Threads[L].yieldFunction = [](void* Storage) {
+                    if (Storage == NULL) {
+                        return true;
+                    }
+
+                    SleepYield* Info = (SleepYield*)Storage;
+
+                    auto CurrentTime = Utils::GetMilliseconds();
+
+                    if (CurrentTime - Info->Start >= Info->Length) {
+                        delete Info;
+
+                        return true;
+                    }
+
+                    return false;
+                };
+            }
 
             return lua_yield(L, 0);
         }

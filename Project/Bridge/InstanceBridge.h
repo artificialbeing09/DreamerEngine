@@ -145,6 +145,14 @@ namespace LuaEvent {
 		return 1;
 	}
 
+	static int l_EventListener_gc(lua_State* L) {
+		return 0;
+	}
+
+	static int l_Event_gc(lua_State* L) {
+		return 0;
+	}
+
 	int luaopen_event(lua_State* L) {
 		luaL_newmetatable(L, "Event");
 
