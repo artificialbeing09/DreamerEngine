@@ -121,6 +121,7 @@
 
 /* ISO C definitions */
 #define LUA_TMPNAMBUFSIZE	L_tmpnam
+
 #define lua_tmpnam(b,e)		{ e = (tmpnam(b) == NULL); }
 
 #endif				/* } */
@@ -171,7 +172,9 @@ static int os_rename (lua_State *L) {
 static int os_tmpname (lua_State *L) {
   char buff[LUA_TMPNAMBUFSIZE];
   int err;
+  #ifdef _WIN32
   lua_tmpnam(buff, err);
+  #endif
   if (l_unlikely(err))
     return luaL_error(L, "unable to generate a unique filename");
   lua_pushstring(L, buff);

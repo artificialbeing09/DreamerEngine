@@ -17,16 +17,16 @@
 #include <map>
 
 #include <GL/glew.h>
-#include <glfw/glfw3.h>
+#include <GLFW/glfw3.h>
 #include "glm/glm.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
 
+
 #ifdef _WIN32
 
 #pragma comment(lib, "opengl32.lib")
-#pragma comment(lib, "Ws2_32.lib")
 
 #endif
 
@@ -50,17 +50,7 @@ namespace Utils {
     }
 
     const char* ReadFile(const char* FileName) {
-        FILE* file = 0;
-
-        errno_t Err = fopen_s(&file, FileName, "rb");
-
-        if (Err != 0) {
-            char Error[128] = { 0 };
-            strerror_s(Error, sizeof(Error), Err);
-            cout << "File error: " << Error << endl;
-
-            return "";
-        }
+        FILE* file = fopen(FileName, "rb");
 
         if (file == NULL) {
             cout << "File is NULL." << endl;

@@ -5,7 +5,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_TRUETYPE_IMPLEMENTATION 
 #include "stb/stb_truetype.h"
-#include "stb/stb_image_write.h"
 
 namespace Graphics::Engine2D {
     Shader Shape2DShader(NULL, NULL);

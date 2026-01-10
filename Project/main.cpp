@@ -1,5 +1,7 @@
 // main.cpp
 
+//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
+
 #include "Testing/Test.h"
 #include "Graphics/Graphics.h"
 
@@ -53,6 +55,7 @@ int main()
         Graphics::Engine3D::Camera::CameraStep();
 
         InputFrameFunction(InputService.get());
+        PreTextObjectFunction();
 
 		for (auto o : SceneUI->GetDescendants()) {
 			if (o->GetType() == "TextObject") {

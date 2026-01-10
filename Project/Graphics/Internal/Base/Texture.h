@@ -479,7 +479,7 @@ namespace Texture {
     void RemoveTexture(string TextureID) {
         uint16_t Texture = Textures[TextureID];
 
-        OccupiedTextures[Texture] = NULL;
+        OccupiedTextures[Texture] = '\0'; // Clang wanted me to make it \0
     }
 
     void GenerateEngineTextures() {

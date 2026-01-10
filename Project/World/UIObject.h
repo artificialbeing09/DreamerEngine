@@ -4,6 +4,7 @@
 
 bool UpdateUINextFrame = true;
 
+
 class UIObject : public Instance {
 public:
 	int ZIndex = 0;

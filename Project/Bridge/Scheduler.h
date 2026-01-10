@@ -166,8 +166,13 @@ namespace Scheduler {
             if (L == NULL) {
                 L = luaL_newstate();
 
-                if (L == NULL)
-                    throw std::exception("Lua state failed to initialize!");
+                if (L == NULL) {
+                    cout << "Lua state failed to initialize!" << endl;
+
+                    exit(-1);
+
+                    return NULL;
+                }
 
                 luaL_openlibs(L);
                 InstanceBridge::lua_initInstance(L);
@@ -317,7 +322,7 @@ namespace Scheduler {
                     lua_pusheventparam(nL, o);
                 }
 
-                SchedulerYieldValue Value = { 1, Parameters.size() };
+                SchedulerYieldValue Value = { 1, int(Parameters.size()) };
 
                 Scheduler->Threads.emplace(nL, Value);
             }

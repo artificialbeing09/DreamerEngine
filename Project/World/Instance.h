@@ -332,14 +332,11 @@ bool EmplaceNewEventDescriptor(string ClassName, string EventName, std::function
 void ChangedEventFirer(shared_ptr<Instance> Object, string PropertyName);
 
 #define CreateClassDescriptor(Class, ClassName, InheritedClassName) bool INTERNALCLASSMACRO##Class = EmplaceNewClassCreator(ClassName, []() {return dynamic_pointer_cast<Instance>(make_shared<Class>());}) && InheritPropertiesFunc(ClassName, InheritedClassName)
-#define CreatePropertyDescriptor(Class, ClassName, PropertyName, Type, LuaType, SetFunction, GetFunction) \
-	EmplaceNewPropertyDescriptor(ClassName, PropertyName, \
-		[](shared_ptr<Instance> t, void* v) { auto o = (##Class##*)t.get(); auto f = ##SetFunction##; ChangedEventFirer(t, PropertyName); (o->*f)(*(##Type##*)v); }, \
-		[](shared_ptr<Instance> t) { auto o = (##Class##*)t.get(); auto f = ##GetFunction##; auto r = (o->*f)(); void* m = malloc(sizeof(r)); if (m != nullptr) { memcpy_s(m, sizeof(r), &r, sizeof(r)); } return m; }, LuaType)
+#define CreatePropertyDescriptor(Class, ClassName, PropertyName, Type, LuaType, SetFunction, GetFunction) EmplaceNewPropertyDescriptor(ClassName, PropertyName, [](shared_ptr<Instance> t, void* v) { auto o = (Class*)t.get(); auto f = SetFunction; ChangedEventFirer(t, PropertyName); (o->*f)(*(Type*)v); }, [](shared_ptr<Instance> t) { auto o = (Class*)t.get(); auto f = GetFunction; auto r = (o->*f)(); void* m = malloc(sizeof(r)); if (m != nullptr) { memcpy(m, &r, sizeof(r)); } return m; }, LuaType)
 
-#define CreateLuaNamecallDescriptor(Class, ClassName, NamecallName, Function) EmplaceNewLuaNamecallDescriptor(ClassName, NamecallName, [](lua_State* L) { auto o = (##Class##*)0x1111; auto f = ##Function##; return (o->*f)(L); })
+#define CreateLuaNamecallDescriptor(Class, ClassName, NamecallName, Function) EmplaceNewLuaNamecallDescriptor(ClassName, NamecallName, [](lua_State* L) { auto o = (Class*)0x1111; auto f = Function; return (o->*f)(L); })
 
-#define CreateLuaEventDescriptor(Class, ClassName, EventName, GetThing) EmplaceNewEventDescriptor(ClassName, EventName, [](void* t){ return &(((##Class##*)t)->##GetThing##); })
+#define CreateLuaEventDescriptor(Class, ClassName, EventName, GetThing) EmplaceNewEventDescriptor(ClassName, EventName, [](void* t){ return &(((Class*)t)->GetThing); })
 
 auto propInstanceName = CreatePropertyDescriptor(Instance, "Instance", "Name", string, L_String, &Instance::SetName, &Instance::GetName);
 auto propInstanceParent = CreatePropertyDescriptor(Instance, "Instance", "Parent", shared_ptr<Instance>, L_Object, &Instance::SetParent, &Instance::GetParent);

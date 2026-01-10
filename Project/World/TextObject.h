@@ -169,14 +169,31 @@ public:
 	}
 };
 
-void TextObjectFrameFunction(Instance* o) {
-	TextObject* text = (TextObject*)o;
+int idf = 0;
 
-	double relativeCursorX = 0.0;
-	double relativeCursorY = 0.0;
+double relativeCursorX = 0.0;
+double relativeCursorY = 0.0;
+
+void PreTextObjectFunction() {
+	int fbWidth, fbHeight;
+	glfwGetFramebufferSize(Gl.window, &fbWidth, &fbHeight);
+
+	int winWidth, winHeight;
+	glfwGetWindowSize(Gl.window, &winWidth, &winHeight);
+
+	double scaleX = (double)fbWidth / winWidth;
+	double scaleY = (double)fbHeight / winHeight;
+
 	glfwGetCursorPos(Gl.window, &relativeCursorX, &relativeCursorY);
 
+	relativeCursorX *= scaleX;
+	relativeCursorY *= scaleY;
+
 	relativeCursorY = Gl.height - relativeCursorY;
+}
+
+void TextObjectFrameFunction(Instance* o) {
+	TextObject* text = (TextObject*)o;
 
 	LuaVector Bounds = text->GetBounds();
 
@@ -186,6 +203,7 @@ void TextObjectFrameFunction(Instance* o) {
 
 	if (relativeCursorX > Bounds.x && relativeCursorY > Bounds.y &&
 		relativeCursorX < Bounds.z && relativeCursorY < Bounds.a) {
+		
 		if (!text->Entered)
 			Scheduler::Event::FireListenerInstance(o, "MouseEntered");
 

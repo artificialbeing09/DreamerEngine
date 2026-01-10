@@ -69,8 +69,8 @@ namespace Graphics::Engine3D {
                 std::sort(Visible.begin(), Visible.end(),
                     [](const auto& a, const auto& b) { return a.Storage2 > b.Storage2; });
 
-                FilteredRenderObjects[key] = move(Opaque);
-                FilteredTransparentRenderObjects[key] = move(Visible);
+                FilteredRenderObjects[key] = std::move(Opaque);
+                FilteredTransparentRenderObjects[key] = std::move(Visible);
             }
 
             for (const auto& [key, ObjectList] : FilteredRenderObjects) {

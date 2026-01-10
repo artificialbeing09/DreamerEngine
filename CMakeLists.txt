@@ -1,7 +1,7 @@
 ﻿# CMakeList.txt : Top-level CMake project file, do global configuration
 # and include sub-projects here.
 #
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.10)
 
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
@@ -29,9 +29,17 @@ target_include_directories(Concise
     PRIVATE Lib
 )
 
+set(OpenGL_GL_PREFERENCE "LEGACY")
+
+find_package(glfw3 REQUIRED)
+find_package(OpenGL REQUIRED)
+
 target_link_libraries(Concise
-    PRIVATE ${CMAKE_SOURCE_DIR}/Lib/glfw3.lib
-    PRIVATE ${CMAKE_SOURCE_DIR}/Lib/glew32s.lib
+    #PRIVATE ${CMAKE_SOURCE_DIR}/Lib/glfw3.lib
+    #PRIVATE ${CMAKE_SOURCE_DIR}/Lib/glew32s.lib
+    PRIVATE GLEW
+    PRIVATE glfw
+    PRIVATE OpenGL::GL
 )
 
 add_custom_command(
