@@ -1,0 +1,1 @@
+./out/build/linux-release/Concise
