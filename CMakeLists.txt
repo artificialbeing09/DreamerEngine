@@ -21,8 +21,14 @@ file(GLOB LUA_SOURCES
     Lib/Lua/*.c
 )
 
+file(GLOB IMGUI_SOURCES
+    Lib/imgui/*.cpp
+)
+
 add_library(Lua STATIC ${LUA_SOURCES})
+add_library(ImGUI STATIC ${IMGUI_SOURCES})
 target_link_libraries(Concise PRIVATE Lua)
+target_link_libraries(Concise PRIVATE ImGUI)
 
 target_include_directories(Concise
     PRIVATE Project

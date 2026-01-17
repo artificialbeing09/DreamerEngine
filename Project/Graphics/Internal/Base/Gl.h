@@ -73,6 +73,7 @@ public:
     }
 
     void PreRender() {
+        glfwMakeContextCurrent(window);
         glfwGetFramebufferSize(window, &width, &height);
         glViewport(0, 0, width, height);
     }

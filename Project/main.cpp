@@ -2,8 +2,7 @@
 
 //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
 
-#include "Testing/Test.h"
-#include "Graphics/Graphics.h"
+#include "Studio/Studio.h"
 
 using namespace std;
 
@@ -37,6 +36,8 @@ int main()
     cout << "Fonts initialized in " << Utils::GetMilliseconds() - StartTime << " ms" << endl;
 
     Test::Start();
+
+    Studio::InitGUIWindow(Gl.window);
 
     int i = 0;
 
@@ -79,6 +80,8 @@ int main()
 		}
 
         Graphics::Engine2D::Render();
+
+        Studio::GUIRender();
         
         Gl.PostRender();
     }
