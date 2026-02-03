@@ -2,6 +2,10 @@
 
 #define GLEW_STATIC
 
+#ifdef WIN32
+#include <Windows.h>
+#endif
+
 #include <iostream>
 #include <cstdlib>
 #include <vector>

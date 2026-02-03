@@ -10,8 +10,7 @@
 using namespace std;
 
 namespace Studio {
-    bool show_demo_window = true;
-    bool show_another_window = false;
+    bool Enabled = false;
 
     GLFWwindow* window = NULL;
     float main_scale = 1.0f;
@@ -64,6 +63,9 @@ namespace Studio {
     }
 
     void GUIRender() {
+        if (!Enabled)
+            return;
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -87,6 +89,9 @@ namespace Studio {
     }
 
     int InitGUIWindow(GLFWwindow* customWindow = NULL) {
+        if (!Enabled)
+            return 0;
+
         main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor()); // Valid on GLFW 3.3+ only
         window = customWindow;
 

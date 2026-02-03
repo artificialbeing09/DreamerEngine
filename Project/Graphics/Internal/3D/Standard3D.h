@@ -183,7 +183,7 @@ namespace Graphics::Engine3D {
 
     unsigned int depthFBO;
     unsigned int depthMap;
-    const unsigned int SHADOW_SIZE = 512;
+    unsigned int SHADOW_SIZE = 512;
 
     void RenderShadowPassObjectType(StandardObjectMesh Mesh, glm::mat4 lightSpaceMat, vector<RenderCubeObject_t> Objects) {
         if (Objects.size() <= 0) {

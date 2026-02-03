@@ -25,28 +25,39 @@ file(GLOB IMGUI_SOURCES
     Lib/imgui/*.cpp
 )
 
-add_library(Lua STATIC ${LUA_SOURCES})
-add_library(ImGUI STATIC ${IMGUI_SOURCES})
-target_link_libraries(Concise PRIVATE Lua)
-target_link_libraries(Concise PRIVATE ImGUI)
-
 target_include_directories(Concise
     PRIVATE Project
     PRIVATE Lib
 )
 
+add_library(Lua STATIC ${LUA_SOURCES})
+add_library(ImGUI STATIC ${IMGUI_SOURCES})
+target_link_libraries(Concise PRIVATE Lua)
+target_link_libraries(Concise PRIVATE ImGUI)
+
+target_include_directories(ImGUI
+    PRIVATE Lib
+)
+
 set(OpenGL_GL_PREFERENCE "LEGACY")
 
-find_package(glfw3 REQUIRED)
-find_package(OpenGL REQUIRED)
+if (UNIX)
+    find_package(glfw3 REQUIRED)
+    find_package(OpenGL REQUIRED)
 
-target_link_libraries(Concise
-    #PRIVATE ${CMAKE_SOURCE_DIR}/Lib/glfw3.lib
-    #PRIVATE ${CMAKE_SOURCE_DIR}/Lib/glew32s.lib
-    PRIVATE GLEW
-    PRIVATE glfw
-    PRIVATE OpenGL::GL
-)
+    target_link_libraries(Concise
+        PRIVATE GLEW
+        PRIVATE glfw
+        PRIVATE OpenGL::GL
+    )
+endif(UNIX)
+
+if (WIN32)
+    target_link_libraries(Concise
+        PRIVATE ${CMAKE_SOURCE_DIR}/Lib/glfw3.lib
+        PRIVATE ${CMAKE_SOURCE_DIR}/Lib/glew32s.lib
+    )
+endif(WIN32)
 
 add_custom_command(
     TARGET Concise POST_BUILD
