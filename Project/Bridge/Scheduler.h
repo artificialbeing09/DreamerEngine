@@ -4,19 +4,32 @@
 #include <map>
 #include "InstanceBridge.h"
 #include "../World/GameWorld.h"
+#include "../LoadAndSave/LoadAndSave.h"
 
 namespace Scheduler {
+    map<string, int> luaRequires = {};
+
+    bool YieldOnRequires = true;
+
     struct SchedulerYieldValue {
         int cState = 0;
         // 0 -> null/deleted
         // 1 -> ready to run
         // 2 -> yielding
+        
         int returnValues = 0; // number of values to return after yielding
         void* storage = NULL;
         std::function<void(lua_State*, void*)> returnFunction = [](...) {};
 
+        bool errored = false;
+        
+        string name = "none"; // Only used for requires and on the main thread of a script. DO NOT set it for other stuff
+
         void* yieldStorage = NULL;
-        std::function<bool(void*)> yieldFunction = [](...) { return true; };
+        std::function<int(void*)> yieldFunction = [](...) { return true; };
+        // 0 -> keep yielding
+        // 1 -> run
+        // 2 -> error
     };
 
     class SchedulerT {
@@ -44,16 +57,22 @@ namespace Scheduler {
             lua_State* L = pair.first;
             SchedulerYieldValue state = pair.second;
 
-            if (state.cState == 2)
-                if (state.yieldFunction(state.yieldStorage))
+            int status = lua_status(L);
+
+            if (state.cState == 2) {
+                int result = state.yieldFunction(state.yieldStorage);
+
+                if (result != 0)
                     state.cState = 1;
+
+                if (result == 2)
+                    status = LUA_ERRRUN;
+            }
 
             if (state.cState == 1) {
                 int nres = 0;
 
-                int status = lua_status(L);
-
-                if (lua_status(L) == LUA_OK || lua_status(L) == LUA_YIELD) {
+                if ((status == LUA_OK || status == LUA_YIELD)) {
                     if (state.returnValues > 0) {
                         state.returnFunction(L, state.storage);
 
@@ -67,16 +86,23 @@ namespace Scheduler {
 
                 if (status == LUA_YIELD) { /* Do nothing, as we trust the function that yielded. */ }
                 else if (status == LUA_OK) {
+                    if (state.name != "none" && nres > 0 && Scheduler::YieldOnRequires) {
+                        int ReturnReference = luaL_ref(L, LUA_REGISTRYINDEX);
+
+                        luaRequires[state.name] = ReturnReference;
+                    }
+
                     Scheduler->Threads[L].cState = 0; /* Erase thread as the code has finished running. */
                 }
                 else {
                     string Error = lua_tostring(L, -1);
 
-                    cout << "ERROR: " << Error << endl;
+                    cout << "\033[1;31m" + Error + "\033[0m" << endl;
                     
                     lua_settop(L, 0);
 
                     Scheduler->Threads[L].cState = 0; /* Erase thread as the code has halted. */
+                    Scheduler->Threads[L].errored = true;
                 }
 
                 Executed++;
@@ -87,6 +113,8 @@ namespace Scheduler {
     }
 
     namespace Lua {
+        lua_State* RunScript(string Script, string Name);
+
         int lua_sleep(lua_State* L) {
             double Time = luaL_checknumber(L, 1);
             long TimeMilli = (long)(Time * 1000.0);
@@ -115,7 +143,7 @@ namespace Scheduler {
                 Storage->Length = TimeMilli;
 
                 S->Threads[L].yieldStorage = Storage;
-
+                
                 S->Threads[L].yieldFunction = [](void* Storage) {
                     if (Storage == NULL) {
                         return true;
@@ -155,9 +183,139 @@ namespace Scheduler {
             return 0;
         }
 
+        map<string, lua_State*> ModuleHasBeenRequired = {};
+        
+        int lua_require(lua_State* L) {
+            string moduleName = luaL_checkstring(L, 1);
+
+            int ref = Scheduler::luaRequires[moduleName];
+
+            if (ref == NULL) {
+                string ScriptText = LoadAndSave::GetScriptByModuleName(moduleName);
+
+                if (ScriptText.size() == 0) {
+                    return luaL_error(L, "Required module is empty or doesn't exist!");
+                }
+
+                if (!Scheduler::YieldOnRequires) {
+                    if (luaL_loadbufferx(L, ScriptText.c_str(), ScriptText.size(), ("@" + moduleName).c_str(), NULL) != LUA_OK ||
+                        lua_pcall(L, 0, 1, 0) != LUA_OK) {
+                        return luaL_error(L, ("Required module \"" + moduleName + "\" failed to run: " + (string)lua_tostring(L, -1)).c_str());
+                    }
+
+                    ref = luaL_ref(L, LUA_REGISTRYINDEX);
+                    Scheduler::luaRequires[moduleName] = ref;
+                }
+                else {
+                    lua_State* moduleL = ModuleHasBeenRequired[moduleName];
+
+                    if (!ModuleHasBeenRequired[moduleName]) {
+                        moduleL = RunScript(ScriptText, moduleName);
+
+                        if (moduleL == 0) {
+                            luaL_error(L, ("Required module \"" + moduleName + "\" syntax errored!").c_str());
+
+                            return 0;
+                        }
+
+                        ModuleHasBeenRequired[moduleName] = moduleL;
+                    }
+
+                    auto StartTime = Utils::GetMilliseconds();
+
+                    auto S = GetScheduler();
+
+                    struct RequireYield {
+                        string ModuleName = "script";
+                        long long Start = 0;
+                        lua_State* L = NULL;
+                        lua_State* moduleL = NULL;
+                    };
+
+                    RequireYield* Storage = new RequireYield;
+                    Storage->ModuleName = moduleName;
+                    Storage->Start = StartTime;
+                    Storage->L = L;
+                    Storage->moduleL = moduleL;
+                    
+                    S->Threads[L].cState = 2;
+
+                    S->Threads[L].yieldStorage = Storage;
+                    S->Threads[L].storage = Storage;
+
+                    S->Threads[L].yieldFunction = [](void* Storage) {
+                        if (Storage == NULL) {
+                            return 1;
+                        }
+
+                        auto CurrentTime = Utils::GetMilliseconds();
+
+                        RequireYield* Info = (RequireYield*)Storage;
+
+                        int ref = Scheduler::luaRequires[Info->ModuleName];
+
+                        if (ref != NULL) {
+                            return 1;
+                        }
+
+                        if ((CurrentTime - Info->Start) > 2000) {
+                            cout << "\033[1;33m" << "Required module \"" + Info->ModuleName + "\" has taken more than 2 seconds to load. Does it return any values?" << "\033[0m" << endl; // replace with warn function evntually
+                            Info->Start = LLONG_MAX;
+                        }
+
+                        auto S = GetScheduler();
+
+                        if (S->Threads[Info->moduleL].errored) {
+                            lua_Debug ar;
+                            if (lua_getstack(Info->L, 1, &ar)) {
+                                lua_getinfo(Info->L, "Sl", &ar);
+                                lua_pushstring(Info->L, (((string)ar.source).substr(1) + ":" + to_string(ar.currentline) + ": Required module \"" + Info->ModuleName + "\" has errored!").c_str());
+                            }
+                            else {
+                                lua_pushstring(Info->L, (": Required module \"" + Info->ModuleName + "\" has errored!").c_str());
+                            }
+                            
+                            S->Threads[Info->L].returnValues = 0;
+
+                            return 2;
+                        }
+
+                        return 0;
+                        };
+
+                    S->Threads[L].returnFunction = [](lua_State* L, void* Storage) {
+                        if (Storage == NULL) {
+                            return;
+                        }
+
+                        RequireYield* Info = (RequireYield*)Storage;
+
+                        int ref = Scheduler::luaRequires[Info->ModuleName];
+
+                        lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+
+                        lua_pushvalue(L, -1);
+
+                        return;
+                        };
+
+                    S->Threads[L].returnValues = 1;
+
+                    return lua_yield(L, 0);
+                }
+            }
+
+            lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+
+            lua_pushvalue(L, -1);
+
+            return 1;
+        }
+
         void register_scheduler_functions(lua_State* L) {
             lua_register(L, "sleep", lua_sleep);
             lua_register(L, "spawn", lua_spawn);
+            lua_register(L, "require", lua_require);
         }
 
         lua_State* GetGlobalState() {
@@ -167,7 +325,7 @@ namespace Scheduler {
                 L = luaL_newstate();
 
                 if (L == NULL) {
-                    cout << "Lua state failed to initialize!" << endl;
+                    cout << "\033[1;31mLua state failed to initialize!\033[0m" << endl;
 
                     exit(-1);
 
@@ -190,16 +348,17 @@ namespace Scheduler {
             return L;
         }
 
-        int RunScript(string Script) {
+        lua_State* RunScript(string Script, string Name = "console") {
             auto gL = GetGlobalState();
 
             lua_State* L = lua_newthread(gL);
 
             int ref = luaL_ref(gL, LUA_REGISTRYINDEX);
-            
-            if (luaL_loadstring(L, Script.c_str()) != LUA_OK) {
-                cout << "FATAL ERROR: FAILED TO LOADSTRING" << endl;
+
+            if (luaL_loadbufferx(L, Script.c_str(), Script.size(), ("@" + Name).c_str(), NULL) != LUA_OK) {
+                cout << "\033[1;31m" << lua_tostring(L, -1) << "\033[0m" << endl;
                 lua_pop(L, 1);
+                luaL_unref(gL, LUA_REGISTRYINDEX, ref);
                 return 0;
             }
 
@@ -207,10 +366,14 @@ namespace Scheduler {
 
             auto Scheduler = GetScheduler();
 
-            Scheduler->Threads.emplace(L, 1);
+            SchedulerYieldValue Value = { 1 };
+            Value.name = Name;
 
-            return 0;
+            Scheduler->Threads.emplace(L, Value);
+
+            return L;
         }
+
     }
 
     namespace Event {
