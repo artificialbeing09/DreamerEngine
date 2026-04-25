@@ -35,7 +35,9 @@ int main()
         Test::Start();
     }
 
-    Scheduler::Lua::RunScript(LoadAndSave::GetScriptByModuleName("main.lua"), "main.lua");
+    if (!Studio::Enabled) {
+        Scheduler::Lua::RunScript(LoadAndSave::GetScriptByModuleName("main.lua"), "main.lua");
+    }
 
     Studio::InitGUIWindow(Gl.window);
 
@@ -48,6 +50,8 @@ int main()
 
 	auto SceneUI = Services::GetService<UIScene>("UIScene");
     auto InputService = Services::GetService<Input>("Input");
+
+    
 
     while (!Gl.ShouldClose()) {
         i++;

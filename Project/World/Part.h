@@ -133,33 +133,29 @@ public:
 
 		auto& RO = Graphics::Engine3D::RenderObjects[Shape];
 
-		if (IsRenderable) {
-			if (RenderIndex == -1) {
-				RenderIndex = (int)RO.size();
+		if (IsRenderable && RenderIndex == -1) {
+			RenderIndex = (int)RO.size();
 
-				auto& T = RO.emplace_back();
+			auto& T = RO.emplace_back();
 
-				T = {
-					this,
-					StoredPrimitive
-				};
+			T = {
+				this,
+				StoredPrimitive
+			};
 
-				Primitive = &RO[RenderIndex].Object;
-			}
+			Primitive = &RO[RenderIndex].Object;
 		}
-		else {
-			if (RenderIndex != -1) {
-				StoredPrimitive = RO[RenderIndex].Object;
-				Primitive = &StoredPrimitive;
+		else if ((!IsRenderable) && RenderIndex != -1) {
+			StoredPrimitive = RO[RenderIndex].Object;
+			Primitive = &StoredPrimitive;
 
-				Part* OtherPart = (Part*)RO.back().Storage;
-				OtherPart->RenderIndex = RenderIndex;
+			Part* OtherPart = (Part*)RO.back().Storage;
+			OtherPart->RenderIndex = RenderIndex;
 
-				std::swap(RO[RenderIndex], RO.back());
-				RO.pop_back();
+			std::swap(RO[RenderIndex], RO.back());
+			RO.pop_back();
 
-				RenderIndex = -1;
-			}
+			RenderIndex = -1;
 		}
 
 		return;

@@ -68,7 +68,7 @@ float getVisibility(mat4 lightSpaceMatrix, vec3 lightDir, int shadowIndex) {
 
     // declare a bias to deal with shadow acne
     float cosTheta = clamp(dot(Normal, lightDir), 0.0, 1.0);
-    float bias = clamp(0.0005 * tan(acos(cosTheta)), 0, 0.01);
+    float bias = clamp(0.0005 * tan(acos(cosTheta)), 0.0, 0.01);
     projCoords.z -= bias;
     float visibility = 1.0;
     float spreadParam = 500.0;

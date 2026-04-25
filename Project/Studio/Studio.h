@@ -9,6 +9,9 @@
 #include "imgui/imgui_impl_opengl3.h"
 
 #include "TextEditor.h"
+#include "LoadAndSave/Serializer.h"
+
+#include "pfd.h"
 
 using namespace std;
 
@@ -49,11 +52,15 @@ namespace Studio {
                 Pushed = true;
             }
 
+            ImGui::PushID((int)Inst.get());
+
             if (ImGui::Button((Inst->GetName()).c_str()))
                 if (Inst.get() == SelectedObject.get())
                     SelectedObject = NULL;
                 else
                     SelectedObject = Inst;
+
+            ImGui::PopID();
 
             if (Pushed) {
                 ImGui::PopStyleColor(1);
@@ -61,6 +68,130 @@ namespace Studio {
 
             if (ExpandedChildrenLists[Inst.get()] == true)
                 RenderDescendants(Inst, LeftOffset + 1);
+        }
+    }
+
+    enum FileEntryType {
+        SerializedObject,
+        Script,
+        Folder
+    };
+
+    struct FileEntry;
+    struct FileEntry {
+        FileEntryType T = FileEntryType::Script;
+        string Name = "";
+        string Path = "";
+        deque<FileEntry*> List = {};
+    };
+
+    FileEntry FilesList;
+
+    void UpdateFileEntryList(FileEntry* Parent, string BasePath);
+
+    void UpdateFileEntryList(FileEntry* Parent = &FilesList, string BasePath = ".\\Game") {
+        if (Parent == &FilesList) {
+            FilesList.List = {};
+        }
+
+        for (const auto& dirEntry : filesystem::directory_iterator(BasePath)) {
+            bool IsDirectory = filesystem::is_directory(dirEntry);
+
+            string Path = dirEntry.path().generic_string();
+            string EntryName = Path.substr(Path.find_last_of("/") + 1);
+
+            FileEntry* New = new FileEntry;
+            New->Name = EntryName;
+            New->Path = Path;
+            New->List = {};
+
+            if (IsDirectory) {
+                New->T = FileEntryType::Folder;
+
+                UpdateFileEntryList(New, Path);
+            }
+            else {
+                if (EntryName.find(".map") != -1) {
+                    New->T == FileEntryType::SerializedObject;
+                }
+                else {
+                    New->T == FileEntryType::Script;
+                }
+            }
+
+            Parent->List.push_back(New);
+        }
+    }
+
+    map<string, bool> ExpandedFilesLists;
+
+    string CurrentScriptSelected = "";
+    string CurrentMapSelected = "";
+
+    string IDEText = "";
+
+    TextEditor editor;
+    bool EditorTextChangedLock = false;
+    bool EditorTextChangedThroughSetText = false;
+
+    void RenderFilesList(FileEntry* Start, int LeftOffset);
+
+    void RenderFilesList(FileEntry* Start, int LeftOffset) {
+        for (auto Inst : Start->List) {
+            bool Set = ExpandedFilesLists[Inst->Path];
+
+            ImGui::SetCursorPosX(LeftOffset * 8);
+
+            if (Inst->T == FileEntryType::Folder) {
+                if (ImGui::ArrowButton(Inst->Path.c_str(), Set ? ImGuiDir_Left : ImGuiDir_Right))
+                    ExpandedFilesLists[Inst->Path] = !Set;
+
+                ImGui::SameLine();
+            }
+            else {
+                ImGui::SetCursorPosX((LeftOffset * 8) + 27);
+            }
+
+            ImGui::PushID((int)Inst);
+
+            if (ImGui::Button(Inst->Name.c_str())) {
+                if (Inst->T == FileEntryType::SerializedObject) {
+                    string SerializedText = Utils::ReadFile(Inst->Path.c_str());
+
+                    CurrentMapSelected = Inst->Path;
+
+                    Serializer::DeserializeIntoObject(GetGameWorld(), SerializedText, true);
+                }
+                else if (Inst->T == FileEntryType::Script) {
+                    if (EditorTextChangedLock && CurrentScriptSelected.size() > 0) {
+                        auto m = pfd::message("Unsaved Script", "Do you want to save changes to " + CurrentScriptSelected.substr(CurrentScriptSelected.find_last_of('/') + 1),
+                            pfd::choice::yes_no, pfd::icon::warning);
+
+                        while (!m.ready(200000)) {}
+
+                        switch (m.result())
+                        {
+                        case pfd::button::yes: Utils::WriteFile(CurrentScriptSelected.c_str(), editor.GetText().c_str()); break;
+                        case pfd::button::no: break;
+                        default: break; // Should not happen
+                        }
+                    }
+
+                    CurrentScriptSelected = Inst->Path;
+
+                    IDEText = Utils::ReadFile(CurrentScriptSelected.c_str());
+
+                    editor.SetText(IDEText);
+
+                    EditorTextChangedLock = false;
+                    EditorTextChangedThroughSetText = true;
+                }
+            }
+
+            ImGui::PopID();
+
+            if (ExpandedFilesLists[Inst->Path] == true)
+                RenderFilesList(Inst, LeftOffset + 1);
         }
     }
 
@@ -72,12 +203,25 @@ namespace Studio {
         glfwSetWindowTitle(Gl.window, Info.c_str());
     }
 
-    TextEditor editor;
-
     void InitGUIElements() {
         auto lang = TextEditor::LanguageDefinition::Lua();
         editor.SetLanguageDefinition(lang);
+        editor.SetText(IDEText);
     }
+
+    bool Running = false;
+
+    void Run() {
+        Scheduler::Lua::RunScript(LoadAndSave::GetScriptByModuleName("main.lua"), "main.lua");
+        Running = true;
+    }
+
+    void Stop() {
+        Scheduler::ExitAllThreadsWithIdentity(0);
+        Running = false;
+    }
+
+    int Counter = 0;
 
     void GUIRender() {
         if (BarInfoEnabled) {
@@ -90,6 +234,8 @@ namespace Studio {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        Counter++;
         
         {
             ImGui::Begin("Explorer"); 
@@ -145,22 +291,110 @@ namespace Studio {
             
             ImGui::End();
 
-            ImGui::Begin("IDE");
+            ImGui::Begin("Files");
+
+            if (Counter % 100 == 0) {
+                UpdateFileEntryList();
+            }
+
+            RenderFilesList(&FilesList, 0);
+
+            ImGui::End();
+
+            string WindowTitle = "IDE (" + CurrentScriptSelected.substr(CurrentScriptSelected.find_last_of('/') + 1) + ")";
+
+            if (editor.IsTextChanged()) {
+                if (!EditorTextChangedThroughSetText) {
+                    EditorTextChangedLock = true;
+                }
+                else {
+                    EditorTextChangedThroughSetText = false;
+                }
+            }
+
+            if (EditorTextChangedLock) {
+                WindowTitle += "*";
+            }
+
+            ImGui::Begin((WindowTitle + "###id").c_str());
+
+            if (ImGui::Button("Save")) {
+                if (CurrentScriptSelected.size() == 0) {
+                    auto f = pfd::save_file("Choose file to save",
+                        filesystem::current_path().string() + "\\Game\\script.lua",
+                        { "Lua Script (.lua)", "*.lua" },
+                        pfd::opt::force_overwrite);
+
+                    CurrentScriptSelected = f.result();
+                }
+
+                Utils::WriteFile(CurrentScriptSelected.c_str(), editor.GetText().c_str());
+
+                EditorTextChangedLock = false;
+            }
 
             editor.Render("Script");
-
-            ImGui::Button("Save");
 
             ImGui::End();
 
             ImGui::Begin("Controls");
 
-            if (ImGui::Button("Run")) {
-
+            if (!Running) {
+                if (ImGui::Button("Run")) {
+                    Run();
+                }
+            }
+            else {
+                if (ImGui::Button("Stop")) {
+                    Stop();
+                }
             }
 
-            if (ImGui::Button("Stop")) {
+            ImGui::Separator();
 
+            if (ImGui::Button("Save Current Map")) {
+                if (CurrentMapSelected.size() == 0) {
+                    auto f = pfd::save_file("Choose file to save",
+                        filesystem::current_path().string() + "\\Game\\main.map",
+                        { "Concise Game Map File (.map)", "*.map" },
+                        pfd::opt::force_overwrite);
+
+                    CurrentMapSelected = f.result();
+                }
+
+                string Serialized = Serializer::Serialize(GetGameWorld());
+
+                Utils::WriteFile(CurrentMapSelected.c_str(), Serialized.c_str());
+            }
+
+            if (ImGui::Button("Save Current Map As...")) {
+                auto f = pfd::save_file("Choose file to save",
+                    filesystem::current_path().string() + "\\Game\\main.map",
+                    { "Concise Game Map File (.map)", "*.map" },
+                    pfd::opt::force_overwrite);
+
+                CurrentMapSelected = f.result();
+                
+                string Serialized = Serializer::Serialize(GetGameWorld());
+
+                Utils::WriteFile(CurrentMapSelected.c_str(), Serialized.c_str());
+            }
+
+            if (ImGui::Button("Load Map From File")) {
+                auto f = pfd::open_file("Choose file to open",
+                    filesystem::current_path().string() + "\\Game",
+                    { "Concise Game Map File (.map)", "*.map" },
+                    pfd::opt::none);
+
+                if (f.result().size() > 0) {
+                    string Path = f.result()[0];
+                    string FoundFile = Utils::ReadFile(Path.c_str());
+
+                    Serializer::DeserializeIntoObject(GetGameWorld(), FoundFile, true);
+                }
+                else {
+                    cout << "No File" << endl;
+                }
             }
 
             ImGui::End();
@@ -216,6 +450,12 @@ namespace Studio {
         EngineConfiguration_t EngineConfiguration;
 
         FILE* ConfigFile = fopen("concisesettings.ini", "rb+");
+
+        if (!ConfigFile) {
+            cout << "Config file failed to open." << endl;
+
+            return;
+        }
 
         fread(&EngineConfiguration, sizeof(EngineConfiguration), 1, ConfigFile);
 
@@ -311,6 +551,7 @@ namespace Studio {
 
                 if (ImGui::Button("Play"))
                     glfwSetWindowShouldClose(window, true);
+
 
                 ImGui::SameLine();
 

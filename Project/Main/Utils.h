@@ -81,6 +81,20 @@ namespace Utils {
         return text;
     }
 
+    void WriteFile(const char* FileName, const char* Text) {
+        FILE* file = fopen(FileName, "wb");
+
+        if (file == NULL) {
+            cout << "Error opening file for writing." << endl;
+
+            return;
+        }
+
+        fwrite(Text, 1, strlen(Text), file);
+
+        fclose(file);
+    }
+
     int RoundIncrement(int value, int increment) {
         return ((value + increment / 2) / increment) * increment;
     }

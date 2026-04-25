@@ -548,6 +548,16 @@ namespace Texture {
         return parts;
     }
 
+    string GetIDByTexture(uint16_t TextureID) {
+        for (auto Index : Textures) {
+            if (Index.second == TextureID) {
+                return Index.first;
+            }
+        }
+
+        return "";
+    }
+
     uint16_t GetTextureByID(string TextureID) {
         uint16_t Texture = Textures[TextureID];
 

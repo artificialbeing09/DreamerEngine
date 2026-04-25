@@ -152,6 +152,8 @@ public:
 	int DestroyLua(lua_State* L) {
 		shared_ptr<Instance> obj = luaL_checkinstance(L, 1);
 
+		obj->OnParentChanged(NULL);
+
 		obj->Destroy();
 
 		return 0;
