@@ -43,7 +43,7 @@ public:
 
 		auto World = Services::GetService<Scene>("Scene");
 
-		if (NewParent && this->IsAncestorOf(World)) {
+		if (NewParent && this->IsDescendantOf(World)) {
 			IsRenderable = true;
 		}
 

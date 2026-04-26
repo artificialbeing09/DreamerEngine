@@ -53,9 +53,11 @@ public:
 
 	inline void SetType(string Type) { /* Nothing */ }
 
+	inline bool HasChildren() { return Children.size() > 0; }
+
 	inline shared_ptr<Instance> GetParent() { return Parent.lock(); }
 
-	inline bool IsAncestorOf(shared_ptr<Instance> OtherObject) {
+	inline bool IsDescendantOf(shared_ptr<Instance> OtherObject) {
 		shared_ptr<Instance> Cursor = shared_from_this();
 		
 		while (Cursor != NULL) {
@@ -73,7 +75,7 @@ public:
 		auto LockedNewParent = NewParent;
 		auto LockedParent = Parent.lock();
 
-		if (LockedNewParent && IsAncestorOf(NewParent)) {
+		if (LockedNewParent && NewParent->IsDescendantOf(shared_from_this())) {
 			return; // No recursive parenting :)
 		}
 
@@ -169,11 +171,11 @@ public:
 		return 0;
 	}
 
-	int IsAncestorOfLua(lua_State* L) {
+	int IsDescendantOfLua(lua_State* L) {
 		auto obj = luaL_checkinstance(L, 1);
 		auto obj2 = luaL_checkinstance(L, 2);
 
-		lua_pushboolean(L, obj->IsAncestorOf(obj2));
+		lua_pushboolean(L, obj->IsDescendantOf(obj2));
 
 		return 1;
 	}
@@ -346,7 +348,7 @@ auto propInstanceType = CreatePropertyDescriptor(Instance, "Instance", "Type", s
 
 auto callInstanceGetChildren = CreateLuaNamecallDescriptor(Instance, "Instance", "GetChildren", &Instance::GetChildrenLua);
 auto callInstanceGetDescendants = CreateLuaNamecallDescriptor(Instance, "Instance", "GetDescendants", &Instance::GetDescendantsLua);
-auto callInstanceIsAncestorOf = CreateLuaNamecallDescriptor(Instance, "Instance", "IsAncestorOf", &Instance::IsAncestorOfLua);
+auto callInstanceIsAncestorOf = CreateLuaNamecallDescriptor(Instance, "Instance", "IsDescendantOf", &Instance::IsDescendantOfLua);
 auto callInstanceDestroy = CreateLuaNamecallDescriptor(Instance, "Instance", "Destroy", &Instance::DestroyLua);
 auto callInstanceClearAllChildren = CreateLuaNamecallDescriptor(Instance, "Instance", "ClearAllChildren", &Instance::ClearAllChildrenLua);
 

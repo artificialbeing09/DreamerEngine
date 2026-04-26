@@ -30,6 +30,9 @@ namespace Studio {
     shared_ptr<Instance> SelectedObject = NULL;
     // Note to self: use deque whenever possible.
 
+    bool PropertyInstanceAdorneeEnabled = false;
+    PropertyDescriptor* DescriptorForAdornee = NULL;
+
     void RenderDescendants(shared_ptr<Instance> Start, int LeftOffset);
 
     void RenderDescendants(shared_ptr<Instance> Start, int LeftOffset) {
@@ -38,12 +41,20 @@ namespace Studio {
         for (auto Inst : Children) {
             bool Set = ExpandedChildrenLists[Inst.get()];
             
-            ImGui::SetCursorPosX(LeftOffset * 8);
+            ImGui::SetCursorPosX(LeftOffset * ImGui::GetFrameHeight());
 
-            if (ImGui::ArrowButton(to_string((long long)Inst.get()).c_str(), Set ? ImGuiDir_Left : ImGuiDir_Right))
-                ExpandedChildrenLists[Inst.get()] = !Set;
+            if (Inst->HasChildren()) {
+                if (ImGui::ArrowButton(to_string((long long)Inst.get()).c_str(), Set ? ImGuiDir_Left : ImGuiDir_Right))
+                    ExpandedChildrenLists[Inst.get()] = !Set;
 
-            ImGui::SameLine();
+                ImGui::SameLine();
+            }
+            else {
+                ImVec2 size(ImGui::GetFrameHeight(), ImGui::GetFrameHeight());
+                ImGui::Dummy(size);
+
+                ImGui::SameLine();
+            }
 
             bool Pushed = false;
 
@@ -54,11 +65,18 @@ namespace Studio {
 
             ImGui::PushID((int)Inst.get());
 
-            if (ImGui::Button((Inst->GetName()).c_str()))
-                if (Inst.get() == SelectedObject.get())
-                    SelectedObject = NULL;
-                else
-                    SelectedObject = Inst;
+            if (ImGui::Button((Inst->GetName()).c_str())) {
+                if (PropertyInstanceAdorneeEnabled) {
+                    DescriptorForAdornee->SetFunction(SelectedObject, &Inst);
+                    PropertyInstanceAdorneeEnabled = false;
+                }
+                else {
+                    if (Inst.get() == SelectedObject.get())
+                        SelectedObject = NULL;
+                    else
+                        SelectedObject = Inst;
+                }
+            }
 
             ImGui::PopID();
 
@@ -111,11 +129,11 @@ namespace Studio {
                 UpdateFileEntryList(New, Path);
             }
             else {
-                if (EntryName.find(".map") != -1) {
-                    New->T == FileEntryType::SerializedObject;
+                if (EntryName.substr(EntryName.find_last_of('.')) == ".map") {
+                    New->T = FileEntryType::SerializedObject;
                 }
                 else {
-                    New->T == FileEntryType::Script;
+                    New->T = FileEntryType::Script;
                 }
             }
 
@@ -140,7 +158,7 @@ namespace Studio {
         for (auto Inst : Start->List) {
             bool Set = ExpandedFilesLists[Inst->Path];
 
-            ImGui::SetCursorPosX(LeftOffset * 8);
+            ImGui::SetCursorPosX(LeftOffset * ImGui::GetFrameHeight());
 
             if (Inst->T == FileEntryType::Folder) {
                 if (ImGui::ArrowButton(Inst->Path.c_str(), Set ? ImGuiDir_Left : ImGuiDir_Right))
@@ -149,7 +167,10 @@ namespace Studio {
                 ImGui::SameLine();
             }
             else {
-                ImGui::SetCursorPosX((LeftOffset * 8) + 27);
+                ImVec2 size(ImGui::GetFrameHeight(), ImGui::GetFrameHeight());
+                ImGui::Dummy(size);
+
+                ImGui::SameLine();
             }
 
             ImGui::PushID((int)Inst);
@@ -207,6 +228,8 @@ namespace Studio {
         auto lang = TextEditor::LanguageDefinition::Lua();
         editor.SetLanguageDefinition(lang);
         editor.SetText(IDEText);
+
+        UpdateFileEntryList();
     }
 
     bool Running = false;
@@ -222,6 +245,8 @@ namespace Studio {
     }
 
     int Counter = 0;
+
+    char PropertyValueBuf[256][256];
 
     void GUIRender() {
         if (BarInfoEnabled) {
@@ -247,6 +272,8 @@ namespace Studio {
             ImGui::Begin("Properties"); 
 
             if (SelectedObject != NULL) {
+                int PropertyI = 0;
+
                 for (auto i : ClassPropertyDescriptorList[SelectedObject->GetType()]) {
                     ImGui::Text(i.first.c_str());
 
@@ -254,18 +281,49 @@ namespace Studio {
 
                     auto PropertyInfo = i.second;
 
-                    if (PropertyInfo->Type == L_String) {
-                        string* CurrentText = (string*)i.second->GetFunction(SelectedObject);
+                    char* PropertyValueStorage = PropertyValueBuf[PropertyI];
 
-                        ImGui::Text(CurrentText->c_str());
+                    if (PropertyInfo->Type == L_String) {
+                        string* CurrentText = (string*)PropertyInfo->GetFunction(SelectedObject);
+
+                        string ExtractedValue = *CurrentText;
+
+                        memcpy(PropertyValueStorage, ExtractedValue.c_str(), 255);
+                        PropertyValueStorage[255] = 0;
+
+                        if (ImGui::InputText(("###" + i.first).c_str(), PropertyValueStorage, 256, ImGuiInputTextFlags_EnterReturnsTrue)) {
+                            string* NewString = new string;
+                            *NewString = PropertyValueStorage;
+
+                            PropertyInfo->SetFunction(SelectedObject, NewString);
+                        }
+
                     }
                     else if (PropertyInfo->Type == L_Object) {
-                        shared_ptr<Instance>* CurrentText = (shared_ptr<Instance>*)i.second->GetFunction(SelectedObject);
+                        shared_ptr<Instance>* CurrentText = (shared_ptr<Instance>*)PropertyInfo->GetFunction(SelectedObject);
+                        
+                        bool ObjectEnabled = PropertyInstanceAdorneeEnabled && DescriptorForAdornee == PropertyInfo;
 
-                        ImGui::Text((*CurrentText)->GetName().c_str());
+                        if (ObjectEnabled) {
+                            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.0f, 0.0f, 1.0f));
+                        }
+
+                        if (ImGui::Button((*CurrentText)->GetName().c_str())) {
+                            if (ObjectEnabled) {
+                                PropertyInstanceAdorneeEnabled = false;
+                            }
+                            else {
+                                PropertyInstanceAdorneeEnabled = true;
+                                DescriptorForAdornee = PropertyInfo;
+                            }
+                        }
+
+                        if (ObjectEnabled) {
+                            ImGui::PopStyleColor();
+                        }
                     }
                     else if (PropertyInfo->Type == L_Vector) {
-                        LuaVector* CurrentText = (LuaVector*)i.second->GetFunction(SelectedObject);
+                        LuaVector* CurrentText = (LuaVector*)PropertyInfo->GetFunction(SelectedObject);
 
                         string VectorString = "";
 
@@ -274,18 +332,66 @@ namespace Studio {
                         VectorString += to_string(CurrentText->z) + ", ";
                         VectorString += to_string(CurrentText->a) + "";
 
-                        ImGui::Text(VectorString.c_str());
+                        memcpy(PropertyValueStorage, VectorString.c_str(), 255);
+                        PropertyValueStorage[255] = 0;
+
+                        if (ImGui::InputText(("###" + i.first).c_str(), PropertyValueStorage, 256, ImGuiInputTextFlags_EnterReturnsTrue)) {
+                            vector<double> Lista = {};
+
+                            string MadeNumber = "";
+
+                            for (int i = 0; i < strlen(PropertyValueStorage); i++) {
+                                char CurrentCharacter = PropertyValueStorage[i];
+
+                                if (CurrentCharacter == ',') {
+                                    double Num = 0;
+
+                                    try { Num = stod(MadeNumber); } catch (exception& e) {}
+
+                                    Lista.push_back(Num);
+
+                                    MadeNumber = "";
+                                }
+                                else if ((CurrentCharacter >= '0' && CurrentCharacter <= '9') || CurrentCharacter == '.') {
+                                    MadeNumber += CurrentCharacter;
+                                }
+                            }
+
+                            LuaVector NewVec = { Lista[0], Lista[1], Lista[2], Lista[3] };
+
+                            PropertyInfo->SetFunction(SelectedObject, &NewVec);
+                        }
                     }
                     else if (PropertyInfo->Type == L_Int) {
-                        int64_t* CurrentText = (int64_t*)i.second->GetFunction(SelectedObject);
+                        int64_t* CurrentText = (int64_t*)PropertyInfo->GetFunction(SelectedObject);
 
-                        ImGui::Text(to_string(*CurrentText).c_str());
+                        string ExtractedValue = to_string(*CurrentText);
+
+                        memcpy(PropertyValueStorage, ExtractedValue.c_str(), 255);
+                        PropertyValueStorage[255] = 0;
+
+                        if (ImGui::InputText(("###" + i.first).c_str(), PropertyValueStorage, 256, ImGuiInputTextFlags_EnterReturnsTrue)) {
+                            int64_t NewValue = stoll(PropertyValueStorage);
+
+                            PropertyInfo->SetFunction(SelectedObject, &NewValue);
+                        }
                     }
                     else if (PropertyInfo->Type == L_Number) {
-                        double* CurrentText = (double*)i.second->GetFunction(SelectedObject);
+                        double* CurrentText = (double*)PropertyInfo->GetFunction(SelectedObject);
 
-                        ImGui::Text(to_string(*CurrentText).c_str());
+                        string ExtractedValue = to_string(*CurrentText);
+
+                        memcpy(PropertyValueStorage, ExtractedValue.c_str(), 255);
+                        PropertyValueStorage[255] = 0;
+
+                        if (ImGui::InputText(("###" + i.first).c_str(), PropertyValueStorage, 256, ImGuiInputTextFlags_EnterReturnsTrue)) {
+                            double NewValue = stod(PropertyValueStorage);
+
+                            PropertyInfo->SetFunction(SelectedObject, &NewValue);
+                        }
                     }
+
+                    PropertyI++;
                 }
             }
             
@@ -293,7 +399,7 @@ namespace Studio {
 
             ImGui::Begin("Files");
 
-            if (Counter % 100 == 0) {
+            if (Counter % 60 == 0) {
                 UpdateFileEntryList();
             }
 
@@ -333,6 +439,10 @@ namespace Studio {
                 EditorTextChangedLock = false;
             }
 
+            if (ImGui::Button("Run as console")) {
+                Scheduler::Lua::RunScript(editor.GetText());
+            }
+
             editor.Render("Script");
 
             ImGui::End();
@@ -348,6 +458,10 @@ namespace Studio {
                 if (ImGui::Button("Stop")) {
                     Stop();
                 }
+            }
+
+            if (ImGui::Button("Clean up")) {
+                Serializer::DeserializeIntoObject(GetGameWorld(), "", true);
             }
 
             ImGui::Separator();

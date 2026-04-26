@@ -127,7 +127,7 @@ public:
 
 		auto World = Services::GetService<Scene>("Scene");
 
-		if (NewParent && this->IsAncestorOf(World)) {
+		if (NewParent && this->IsDescendantOf(World)) {
 			IsRenderable = true;
 		}
 
@@ -151,9 +151,11 @@ public:
 
 			Part* OtherPart = (Part*)RO.back().Storage;
 			OtherPart->RenderIndex = RenderIndex;
-
+			
 			std::swap(RO[RenderIndex], RO.back());
 			RO.pop_back();
+
+			OtherPart->Primitive = &RO[RenderIndex].Object;
 
 			RenderIndex = -1;
 		}

@@ -51,8 +51,6 @@ int main()
 	auto SceneUI = Services::GetService<UIScene>("UIScene");
     auto InputService = Services::GetService<Input>("Input");
 
-    
-
     while (!Gl.ShouldClose()) {
         i++;
         Utils::FrameRate::Cap();

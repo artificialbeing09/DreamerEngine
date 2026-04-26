@@ -28,6 +28,12 @@ namespace Serializer {
             }
         }
 
+        if (Object->GetType() == "Sky") {
+            for (int i = 0; i < 6; i++) {
+                ObjectInfo += "\"" + string(Graphics::Sky::SkyTexture[i]) + "\"";
+            }
+        }
+
         ObjectInfo += "o";
 
         for (auto i : ClassPropertyDescriptorList[Object->GetType()]) {
@@ -115,12 +121,17 @@ namespace Serializer {
 
         Saved += SerializeObject(Services::GetService<UIScene>("UIScene"));
 
+        // Sky
+
+        Saved += SerializeObject(Services::GetService<Sky>("Sky"));
+
         return Saved;
 	}
 
     void DeserializeIntoObject(shared_ptr<Instance> World, string SerializedGame, bool ClearWorld = false) {
         auto SceneObj = Services::GetService<Scene>("Scene");
         auto UISceneObj = Services::GetService<UIScene>("UIScene");
+        auto SkyObj = Services::GetService<Sky>("Sky");
 
         if (ClearWorld) {
             for (shared_ptr<Instance> Inst : SceneObj->GetChildren()) {
@@ -128,6 +139,10 @@ namespace Serializer {
             }
 
             for (shared_ptr<Instance> Inst : UISceneObj->GetChildren()) {
+                Inst->Destroy();
+            }
+
+            for (shared_ptr<Instance> Inst : SkyObj->GetChildren()) {
                 Inst->Destroy();
             }
         }
@@ -164,20 +179,25 @@ namespace Serializer {
                 Stored.push_back(DecodedString);
             }
             else if (!QuotationActivated && !InString) { // Special code
-                cout << Character << endl;
-
-                for (string Txt : Stored) {
-                    cout << Txt << endl;
-                }
-
-                cout << "-" << endl;
-
                 if (Character == 'o') {
                     if (Stored[0] == "Scene") {
                         CurrentInstance = SceneObj;
                     }
                     else if (Stored[0] == "UIScene") {
                         CurrentInstance = UISceneObj;
+                    }
+                    else if (Stored[0] == "Sky") {
+                        CurrentInstance = SkyObj;
+
+                        shared_ptr<Sky> ObjectNew = dynamic_pointer_cast<Sky>(CurrentInstance);
+
+                        for (int SkyIndex = 0; SkyIndex < 6; SkyIndex++) {
+                            string SkyString = Stored[SkyIndex + 2];
+                            void* NewStringCreated = malloc(SkyString.size() + 1);
+                            memcpy(NewStringCreated, SkyString.c_str(), SkyString.size() + 1);
+
+                            Graphics::Sky::SkyTexture[SkyIndex] = (const char*)NewStringCreated;
+                        }
                     }
                     else {
                         CurrentInstance = CreateInstanceOfType(Stored[0]);
@@ -187,6 +207,15 @@ namespace Serializer {
                         CurrentInstance->SetParent(InstanceStack[InstanceStack.size() - 1]);
 
                         if (CurrentInstance->GetType() == "Part") {
+                            shared_ptr<Part> ObjectNew = dynamic_pointer_cast<Part>(CurrentInstance);
+
+                            ObjectNew->Primitive->Texture0 = Texture::GetTextureByID(Stored[0 + 2]);
+                            ObjectNew->Primitive->Texture1 = Texture::GetTextureByID(Stored[1 + 2]);
+                            ObjectNew->Primitive->Texture2 = Texture::GetTextureByID(Stored[2 + 2]);
+                            ObjectNew->Primitive->Texture3 = Texture::GetTextureByID(Stored[3 + 2]);
+                            ObjectNew->Primitive->Texture4 = Texture::GetTextureByID(Stored[4 + 2]);
+                            ObjectNew->Primitive->Texture5 = Texture::GetTextureByID(Stored[5 + 2]);
+
                             // add stuff later
                         }
                     }
@@ -197,15 +226,17 @@ namespace Serializer {
                     auto PropertyInfo = Properties[Stored[0]];
                     auto PropertyValue = Stored[1];
 
-                    cout << "Set Property: " << Stored[0] << endl;
-
                     if (PropertyInfo->Type == L_String) {
-                        PropertyInfo->SetFunction(CurrentInstance, &PropertyValue); 
-                        // Yes, this is safe because PropertyValue's pointer isn't going to be stored anywhere after the SetFunction call completes.
+                        char* NewStringCreated = (char*)malloc(PropertyValue.size() + 1);
+                        memcpy(NewStringCreated, PropertyValue.c_str(), PropertyValue.size() + 1);
+                        string* CreatedString = new string(NewStringCreated);
+
+                        PropertyInfo->SetFunction(CurrentInstance, CreatedString);
                     }
                     else if (PropertyInfo->Type == L_Object) {
                         PropertyInfo->SetFunction(CurrentInstance, &UUIDMap[PropertyValue]); 
                         // Incomplete (UUIDMap isn't full of all of the Instances once created).
+                        // No object properties have been created yet (other than parent) though because of how bad they are.
                     }
                     else if (PropertyInfo->Type == L_Vector) {
                         string DecodedNumberStr = "";
