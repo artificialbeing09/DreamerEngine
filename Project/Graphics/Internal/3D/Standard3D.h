@@ -25,6 +25,19 @@ struct RenderCubeObject_t {
     float Storage4 = 0;
 };
 
+struct PhysicsExtraInformation_t {
+    glm::vec3 Velocity = glm::vec3(0.0, 0.0, 0.0);
+    glm::vec3 RotationVelocity = glm::vec3(0.0, 0.0, 0.0);
+
+    glm::mat3 InertiaTensorLocal = glm::mat3(1.0);
+    glm::mat3 InvInertiaTensorLocal = glm::mat3(1.0);
+
+    glm::mat3 InertiaTensorWorld = glm::mat3(1.0);
+    glm::mat3 InvInertiaTensorWorld = glm::mat3(1.0);
+    double Mass = 1.0;
+    bool Anchored = false;
+};
+
 struct LightObject_t {
     glm::vec3 Position = glm::vec3(10.0f, 40.0f, 10.0f);
     glm::vec3 Direction = glm::vec3(0.0f, -1.0f, 0.0f);
@@ -40,6 +53,12 @@ struct RenderLightObject_t {
     glm::vec3 LightPos = glm::vec3(0.0f, 0.0f, 0.0f);
     unsigned int shadowMapIndex = 0;
     glm::vec3 Color = glm::vec3(1.0f, 1.0f, 1.0f);
+};
+
+struct RenderObjectStore_t {
+    void* Storage;
+    PhysicsExtraInformation_t Physics;
+    RenderCubeObject_t Object;
 };
 
 vector<float> CubeInterleaved = {
@@ -167,10 +186,7 @@ namespace Graphics::Engine3D {
 
     glm::mat4 lightProjection, lightView, lightSpaceMatrix;
 
-    struct RenderObjectStore_t {
-        void* Storage;
-        RenderCubeObject_t Object;
-    };
+    
 
     struct LightObjectStore_t {
         void* Storage;

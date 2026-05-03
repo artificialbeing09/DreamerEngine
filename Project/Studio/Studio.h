@@ -15,6 +15,26 @@
 
 using namespace std;
 
+namespace Plugin {
+    void LoadPlugins() {
+        LoadAndSave::CreateFolderIfDoesNotExist("./Plugins");
+
+        for (const auto& dirEntry : filesystem::directory_iterator("./Plugins")) {
+            bool IsDirectory = filesystem::is_directory(dirEntry);
+
+            string Path = dirEntry.path().generic_string();
+            string EntryName = Path.substr(Path.find_first_of("/Plugins") + 9);
+
+            if (IsDirectory) {
+                Scheduler::Lua::RunScript(LoadAndSave::GetScriptByModuleName(EntryName + "/main.lua", 1), EntryName, 1);
+            }
+            else {
+                Scheduler::Lua::RunScript(LoadAndSave::GetScriptByModuleName(EntryName, 1), EntryName, 1);
+            }
+        }
+    }
+}
+
 namespace Studio {
     int LoadedItem = 0;
     int TotalItems = 5;
@@ -235,7 +255,7 @@ namespace Studio {
     bool Running = false;
 
     void Run() {
-        Scheduler::Lua::RunScript(LoadAndSave::GetScriptByModuleName("main.lua"), "main.lua");
+        Scheduler::Lua::RunScript(LoadAndSave::GetScriptByModuleName("main.lua", 0), "main.lua", 0);
         Running = true;
     }
 
@@ -388,6 +408,15 @@ namespace Studio {
                             double NewValue = stod(PropertyValueStorage);
 
                             PropertyInfo->SetFunction(SelectedObject, &NewValue);
+                        }
+                    }
+                    else if (PropertyInfo->Type == L_Boolean) {
+                        bool* CurrentText = (bool*)PropertyInfo->GetFunction(SelectedObject);
+
+                        bool Value = *CurrentText;
+
+                        if (ImGui::Checkbox(("###" + i.first).c_str(), &Value)) {
+                            PropertyInfo->SetFunction(SelectedObject, &Value);
                         }
                     }
 

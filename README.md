@@ -4,11 +4,9 @@
 
 * Add point lights and circular spotlights
 
-3. Physics (rigid body)
+3. Physics (rigid body) (partially completed)
 
-4. Studio application to build games
-
-5. Toolbox (marketplace) for people to share models
+4. Studio application to build games (almost completed)
 
 6. Inbuilt animation system
 
@@ -19,21 +17,16 @@
 minor things
 
 1. Global shadows (not just lighting)
+
 2. Pixel specific stuff for UI
 
 3. Lua websockets and networking
-
-4. idk optimize what i can find that can be optimized
 
 5. load images from urls to textures
 
 6. video processing n such
 
 7. file io
-
-9. rename some stuff
-
-10. cut start times as much as possible so games are good
 
 11. Make stuff multithreaded
 

@@ -11,13 +11,24 @@ namespace LoadAndSave {
 		}
 	}
 
-	string GetScriptByModuleName(string ModuleName) {
-		CreateFolderIfDoesNotExist(".\\Game");
+	string GetScriptByModuleName(string ModuleName, int threadIdentity = 0) {
+		if (threadIdentity == 0) {
+			CreateFolderIfDoesNotExist(".\\Game");
 
-		if (!std::filesystem::exists(".\\Game\\" + ModuleName)) {
-			return "";
+			if (!std::filesystem::exists(".\\Game\\" + ModuleName)) {
+				return "";
+			}
+
+			return Utils::ReadFile((".\\Game\\" + ModuleName).c_str());
 		}
+		else if (threadIdentity == 1) {
+			CreateFolderIfDoesNotExist(".\\Plugins");
 
-		return Utils::ReadFile((".\\Game\\" + ModuleName).c_str());
+			if (!std::filesystem::exists(".\\Plugins\\" + ModuleName)) {
+				return "";
+			}
+
+			return Utils::ReadFile((".\\Plugins\\" + ModuleName).c_str());
+		}
 	}
 }

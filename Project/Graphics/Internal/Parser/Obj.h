@@ -57,31 +57,43 @@ namespace ObjParser {
                 else if (Command == "vt")
                     TextureCoords.push_back(pos);
             }
+        }
+
+        for (string Line : Lines) {
+            string Command = Line.substr(0, Line.find_first_of(' '));
+
+            if (Command == "o") {
+                cout << Line << endl;
+            }
 
             if (Command == "f") {
                 ObjTriangle tri;
 
-                int vIndex = 0;
-                for (string vtn : SplitString(Line, ' ')) {
-                    if (vIndex >= 3 || vtn == "f" || vtn.empty()) continue;
+                auto SplitF = SplitString(Line, ' ');
 
-                    int j = -1;
-                    for (string num : SplitString(vtn, '/'))
-                        if (num.empty())
-                            continue;
-                        else if (++j == 0)
-                            tri.Vertex[vIndex] = Vertexes[stoi(num) - 1];
-                        else if (j == 1)
-                            tri.TextureCoord[vIndex] = TextureCoords[stoi(num) - 1];
-                        else if (j == 2)
-                            tri.Normal[vIndex] = Normals[stoi(num) - 1];
-                        else
-                            break;
+                for (int I = 1; I < SplitF.size() - 2; I++) {
+                    vector<string> verts = { SplitF[1], SplitF[I + 1], SplitF[I + 2] };
 
-                    vIndex++;
+                    for (int vIndex = 0; vIndex < 3; vIndex++) {
+                        string vtn = verts[vIndex];
+
+                        int j = -1;
+                        for (string num : SplitString(vtn, '/'))
+                            if (num.empty())
+                                continue;
+                            else if (++j == 0)
+                                tri.Vertex[vIndex] = Vertexes[stoi(num) - 1];
+                            else if (j == 1)
+                                tri.TextureCoord[vIndex] = TextureCoords[stoi(num) - 1];
+                            else if (j == 2)
+                                tri.Normal[vIndex] = Normals[stoi(num) - 1];
+                            else
+                                break;
+                    }
+
+                    Triangles.push_back(tri);
                 }
 
-                Triangles.push_back(tri);
             }
         }
 

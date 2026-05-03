@@ -243,6 +243,7 @@ enum PropertyLuaTypes {
 	L_Object,
 	L_Number,
 	L_Int,
+	L_Boolean,
 	L_Vector // Later make into standard just "Vector".
 };
 

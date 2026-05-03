@@ -95,6 +95,11 @@ namespace Serializer {
 
                 ObjectInfo += "\"" + to_string(*CurrentText) + "\"";
             }
+            else if (PropertyInfo->Type == L_Boolean) {
+                bool* CurrentText = (bool*)i.second->GetFunction(Object);
+                string Value = (*CurrentText) ? "true" : "false";
+                ObjectInfo += "\"" + Value + "\"";
+            }
 
             ObjectInfo += "p";
         }
@@ -267,6 +272,11 @@ namespace Serializer {
                     }
                     else if (PropertyInfo->Type == L_Number) {
                         double Value = stod(PropertyValue);
+                        PropertyInfo->SetFunction(CurrentInstance, &Value);
+                    }
+                    else if (PropertyInfo->Type == L_Boolean) {
+                        bool Value = PropertyValue == "true";
+
                         PropertyInfo->SetFunction(CurrentInstance, &Value);
                     }
                 }

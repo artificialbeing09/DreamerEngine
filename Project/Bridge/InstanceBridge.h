@@ -215,26 +215,41 @@ namespace InstanceBridge {
 
 				lua_pushvector(L, *Value);
 			}
+			else if (Descriptor->Type == PropertyLuaTypes::L_Boolean) {
+				bool* Value = (bool*)Descriptor->GetFunction(Object);
+
+				lua_pushboolean(L, *Value);
+			}
 		}
 		else if (IndexMode == Set) {
 			if (Descriptor->Type == L_String) {
 				string Value = luaL_checkstring(L, 3);
+
 				Descriptor->SetFunction(Object, &Value);
 			}
 			else if (Descriptor->Type == PropertyLuaTypes::L_Number) {
 				double Value = luaL_checknumber(L, 3);
+
 				Descriptor->SetFunction(Object, &Value);
 			}
 			else if (Descriptor->Type == PropertyLuaTypes::L_Int) {
 				int64_t Value = luaL_checkinteger(L, 3);
+
 				Descriptor->SetFunction(Object, &Value);
 			}
 			else if (Descriptor->Type == PropertyLuaTypes::L_Object) {
 				shared_ptr<Instance> Value = luaL_checkinstance(L, 3);
+
 				Descriptor->SetFunction(Object, &Value);
 			}
 			else if (Descriptor->Type == PropertyLuaTypes::L_Vector) {
 				LuaVector Value = luaL_checkvector(L, 3);
+
+				Descriptor->SetFunction(Object, &Value);
+			}
+			else if (Descriptor->Type == PropertyLuaTypes::L_Boolean) {
+				bool Value = lua_toboolean(L, 3);
+
 				Descriptor->SetFunction(Object, &Value);
 			}
 		}

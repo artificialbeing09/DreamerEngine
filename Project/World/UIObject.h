@@ -7,20 +7,20 @@ bool UpdateUINextFrame = true;
 
 class UIObject : public Instance {
 public:
-	int ZIndex = 0;
+	int64_t ZIndex = 0;
 	int AssociatedObject = -1;
 
 	void OnParentChanged(shared_ptr<Instance>) override {
 		UpdateUINextFrame = true;
 	}
 
-	void SetZIndex(int Z) {
+	void SetZIndex(int64_t Z) {
 		ZIndex = Z;
 
 		UpdateUINextFrame = true;
 	}
 
-	int GetZIndex() {
+	int64_t GetZIndex() {
 		return ZIndex;
 	}
 
@@ -30,5 +30,5 @@ public:
 	}
 };
 
-auto propUIObjectZIndex = CreatePropertyDescriptor(UIObject, "UIObject", "ZIndex", int, L_Int, &UIObject::SetZIndex, &UIObject::GetZIndex);
+auto propUIObjectZIndex = CreatePropertyDescriptor(UIObject, "UIObject", "ZIndex", int64_t, L_Int, &UIObject::SetZIndex, &UIObject::GetZIndex);
 CreateClassDescriptor(UIObject, "UIObject", "Instance");

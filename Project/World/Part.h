@@ -1,14 +1,29 @@
 #pragma once
 
 #include "Services.h"
+#include "../Physics/Cube.h"
 
 class Part : public Instance {
 protected:
 	int RenderIndex = -1;
 	RenderCubeObject_t StoredPrimitive;
+	PhysicsExtraInformation_t StoredPhysicsPrimitive;
 public:
 	RenderCubeObject_t* Primitive = &StoredPrimitive;
+	PhysicsExtraInformation_t* PhysicsPrimitive = &StoredPhysicsPrimitive;
 	string Shape = "";
+
+	inline bool GetAnchored() { return PhysicsPrimitive->Anchored; }
+
+	inline void SetAnchored(bool Value) { PhysicsPrimitive->Anchored = Value; }
+
+	inline LuaVector GetVelocity() { return LuaVector(PhysicsPrimitive->Velocity.x, PhysicsPrimitive->Velocity.y, PhysicsPrimitive->Velocity.z); }
+
+	inline void SetVelocity(LuaVector NewPosition) { PhysicsPrimitive->Velocity = glm::vec3(NewPosition.x, NewPosition.y, NewPosition.z); }
+
+	inline LuaVector GetRotationVelocity() { return LuaVector(PhysicsPrimitive->RotationVelocity.x, PhysicsPrimitive->RotationVelocity.y, PhysicsPrimitive->RotationVelocity.z); }
+
+	inline void SetRotationVelocity(LuaVector NewPosition) { PhysicsPrimitive->RotationVelocity = glm::vec3(NewPosition.x, NewPosition.y, NewPosition.z); }
 
 	inline LuaVector GetPosition() { return LuaVector(Primitive->Position.x, Primitive->Position.y, Primitive->Position.z); }
 
@@ -20,7 +35,29 @@ public:
 
 	inline LuaVector GetSize() { return LuaVector(Primitive->Size.x, Primitive->Size.y, Primitive->Size.z); }
 
-	inline void SetSize(LuaVector NewSize) { Primitive->Size = glm::vec3(NewSize.x, NewSize.y, NewSize.z); Primitive->SizeLength = glm::length(Primitive->Size) * 0.5;  }
+	inline void SetSize(LuaVector NewSize) {
+		Primitive->Size = glm::vec3(NewSize.x, NewSize.y, NewSize.z);
+		Primitive->SizeLength = glm::length(Primitive->Size) * 0.5;
+		PhysicsPrimitive->Mass = NewSize.x * NewSize.y * NewSize.z; // Add extra at some point maybe
+
+		float x = NewSize.x, y = NewSize.y, z = NewSize.z;
+		float mass = PhysicsPrimitive->Mass;
+
+		glm::vec3 inertia = glm::vec3(
+			(1.0f / 12.0f) * mass * (y * y + z * z),
+			(1.0f / 12.0f) * mass * (x * x + z * z),
+			(1.0f / 12.0f) * mass * (x * x + y * y)
+		);
+
+		glm::mat3 inertiaTensor = glm::mat3(0.0f);
+
+		inertiaTensor[0][0] = inertia.x;
+		inertiaTensor[1][1] = inertia.y;
+		inertiaTensor[2][2] = inertia.z;
+
+		PhysicsPrimitive->InertiaTensorLocal = inertiaTensor;
+		PhysicsPrimitive->InvInertiaTensorLocal = glm::inverse(inertiaTensor);
+	}
 
 	inline LuaVector GetColor() { return LuaVector(Primitive->Color.r, Primitive->Color.g, Primitive->Color.b); }
 
@@ -140,14 +177,19 @@ public:
 
 			T = {
 				this,
+				StoredPhysicsPrimitive,
 				StoredPrimitive
 			};
 
 			Primitive = &RO[RenderIndex].Object;
+			PhysicsPrimitive = &RO[RenderIndex].Physics;
 		}
 		else if ((!IsRenderable) && RenderIndex != -1) {
 			StoredPrimitive = RO[RenderIndex].Object;
 			Primitive = &StoredPrimitive;
+
+			StoredPhysicsPrimitive = RO[RenderIndex].Physics;
+			PhysicsPrimitive = &StoredPhysicsPrimitive;
 
 			Part* OtherPart = (Part*)RO.back().Storage;
 			OtherPart->RenderIndex = RenderIndex;
@@ -156,6 +198,7 @@ public:
 			RO.pop_back();
 
 			OtherPart->Primitive = &RO[RenderIndex].Object;
+			OtherPart->PhysicsPrimitive = &RO[RenderIndex].Physics;
 
 			RenderIndex = -1;
 		}
@@ -179,6 +222,9 @@ public:
 
 auto propPartPosition = CreatePropertyDescriptor(Part, "Part", "Position", LuaVector, L_Vector, &Part::SetPosition, &Part::GetPosition);
 auto propPartRotation = CreatePropertyDescriptor(Part, "Part", "Rotation", LuaVector, L_Vector, &Part::SetRotation, &Part::GetRotation);
+auto propPartAnchored = CreatePropertyDescriptor(Part, "Part", "Anchored", bool, L_Boolean, &Part::SetAnchored, &Part::GetAnchored);
+auto propPartVelocity = CreatePropertyDescriptor(Part, "Part", "Velocity", LuaVector, L_Vector, &Part::SetVelocity, &Part::GetVelocity);
+auto propPartRotationVelocity = CreatePropertyDescriptor(Part, "Part", "RotationVelocity", LuaVector, L_Vector, &Part::SetRotationVelocity, &Part::GetRotationVelocity);
 auto propPartSize = CreatePropertyDescriptor(Part, "Part", "Size", LuaVector, L_Vector, &Part::SetSize, &Part::GetSize);
 auto propPartColor = CreatePropertyDescriptor(Part, "Part", "Color", LuaVector, L_Vector, &Part::SetColor, &Part::GetColor);
 auto propPartShape = CreatePropertyDescriptor(Part, "Part", "Shape", string, L_String, &Part::SetShape, &Part::GetShape);

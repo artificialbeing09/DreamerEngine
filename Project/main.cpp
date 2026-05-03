@@ -10,33 +10,27 @@ int main()
 
     Graphics::Initialize();
 
-    Studio::LoadedItem++;
-
     Scheduler::Start();
 
     Graphics::Engine3D::CreateMeshVector("Teapot", ObjParser::DefaultParseObj(Utils::ReadFile("Engine/teapot.obj")));
-
-    Studio::LoadedItem++;
+    Graphics::Engine3D::CreateMeshVector("Arrow", ObjParser::DefaultParseObj(Utils::ReadFile("Engine/arrow.obj")));
 
     Texture::GenerateEngineTextures();
 
-    Studio::LoadedItem++;
-
     Services::CreateServices();
-
-    Studio::LoadedItem++;
 
     Graphics::Engine2D::CreateFont("Default", Utils::ReadFile("Engine/Default.ttf"));
 	Graphics::Engine2D::CreateFont("HyperFont", Utils::ReadFile("Engine/ttf_HyperFont.ttf"));
 
-    Studio::LoadedItem++;
-    
     if (GetConsoleWindow()) {
         Test::Start();
     }
 
     if (!Studio::Enabled) {
-        Scheduler::Lua::RunScript(LoadAndSave::GetScriptByModuleName("main.lua"), "main.lua");
+        Studio::Run();
+    }
+    else {
+        Plugin::LoadPlugins();
     }
 
     Studio::InitGUIWindow(Gl.window);
@@ -56,6 +50,10 @@ int main()
         Utils::FrameRate::Cap();
 
         Graphics::Engine3D::Camera::CameraStep();
+
+        if (Studio::Running) {
+            Physics::SimulateCubes();
+        }
 
         InputFrameFunction(InputService.get());
         PreTextObjectFunction();

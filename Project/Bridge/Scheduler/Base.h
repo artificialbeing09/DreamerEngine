@@ -9,7 +9,8 @@
 using namespace std;
 
 namespace Scheduler {
-    map<string, int> luaRequires = {};
+    map<int, map<string, int>> luaRequires = {}; 
+    // Index 1 = Identity number, Index 2 = name, value 2 = require return value lua ref index
 
     bool YieldOnRequires = true;
 
@@ -93,7 +94,7 @@ namespace Scheduler {
                     if (state.name != "none" && nres > 0 && Scheduler::YieldOnRequires) {
                         int ReturnReference = luaL_ref(L, LUA_REGISTRYINDEX);
 
-                        luaRequires[state.name] = ReturnReference;
+                        luaRequires[state.threadIdentity][state.name] = ReturnReference;
                     }
 
                     Scheduler->Threads[L].cState = 0; /* Erase thread as the code has finished running. */

@@ -68,15 +68,19 @@ namespace Scheduler::Lua {
         return 0;
     }
 
-    map<string, lua_State*> ModuleHasBeenRequired = {};
+    map<int, map<string, lua_State*>> ModuleHasBeenRequired = {};
 
     int lua_require(lua_State* L) {
         string moduleName = luaL_checkstring(L, 1);
 
-        int ref = Scheduler::luaRequires[moduleName];
+        auto S = GetScheduler();
+
+        auto ThreadData = S->Threads[L];
+
+        int ref = Scheduler::luaRequires[ThreadData.threadIdentity][moduleName];
 
         if (ref == NULL) {
-            string ScriptText = LoadAndSave::GetScriptByModuleName(moduleName);
+            string ScriptText = LoadAndSave::GetScriptByModuleName(moduleName, ThreadData.threadIdentity);
 
             if (ScriptText.size() == 0) {
                 return luaL_error(L, "Required module is empty or doesn't exist!");
@@ -89,13 +93,13 @@ namespace Scheduler::Lua {
                 }
 
                 ref = luaL_ref(L, LUA_REGISTRYINDEX);
-                Scheduler::luaRequires[moduleName] = ref;
+                Scheduler::luaRequires[ThreadData.threadIdentity][moduleName] = ref;
             }
             else {
-                lua_State* moduleL = ModuleHasBeenRequired[moduleName];
+                lua_State* moduleL = ModuleHasBeenRequired[ThreadData.threadIdentity][moduleName];
 
-                if (!ModuleHasBeenRequired[moduleName]) {
-                    moduleL = RunScript(ScriptText, moduleName);
+                if (!moduleL) {
+                    moduleL = RunScript(ScriptText, moduleName, ThreadData.threadIdentity);
 
                     if (moduleL == 0) {
                         luaL_error(L, ("Required module \"" + moduleName + "\" syntax errored!").c_str());
@@ -103,18 +107,17 @@ namespace Scheduler::Lua {
                         return 0;
                     }
 
-                    ModuleHasBeenRequired[moduleName] = moduleL;
+                    ModuleHasBeenRequired[ThreadData.threadIdentity][moduleName] = moduleL;
                 }
 
                 auto StartTime = Utils::GetMilliseconds();
-
-                auto S = GetScheduler();
 
                 struct RequireYield {
                     string ModuleName = "script";
                     long long Start = 0;
                     lua_State* L = NULL;
                     lua_State* moduleL = NULL;
+                    int threadIdentity = 0;
                 };
 
                 RequireYield* Storage = new RequireYield;
@@ -122,6 +125,7 @@ namespace Scheduler::Lua {
                 Storage->Start = StartTime;
                 Storage->L = L;
                 Storage->moduleL = moduleL;
+                Storage->threadIdentity = ThreadData.threadIdentity;
 
                 S->Threads[L].cState = 2;
 
@@ -137,7 +141,7 @@ namespace Scheduler::Lua {
 
                     RequireYield* Info = (RequireYield*)Storage;
 
-                    int ref = Scheduler::luaRequires[Info->ModuleName];
+                    int ref = Scheduler::luaRequires[Info->threadIdentity][Info->ModuleName];
 
                     if (ref != NULL) {
                         return 1;
@@ -175,7 +179,7 @@ namespace Scheduler::Lua {
 
                     RequireYield* Info = (RequireYield*)Storage;
 
-                    int ref = Scheduler::luaRequires[Info->ModuleName];
+                    int ref = Scheduler::luaRequires[Info->threadIdentity][Info->ModuleName];
 
                     lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
 
