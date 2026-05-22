@@ -143,30 +143,10 @@ namespace Physics {
                 RegularCube.Physics.Velocity += glm::vec3(0.0f, -0.01f, 0.0f);
             }
 
-            glm::quat q =
-                glm::quat(glm::vec3(
-                    glm::radians(RegularCube.Object.Rotation.x),
-                    glm::radians(RegularCube.Object.Rotation.y),
-                    glm::radians(RegularCube.Object.Rotation.z)
-                ));
-
-            glm::quat dq = glm::quat(0,
-                RegularCube.Physics.RotationVelocity.x,
-                RegularCube.Physics.RotationVelocity.y,
-                RegularCube.Physics.RotationVelocity.z
-            ) * q;
-
-            float deltaTime = 1.0 / 60.0;
-
-            q += 0.5f * dq * deltaTime;
-            q = glm::normalize(q);
-
             RegularCube.Object.Position += RegularCube.Physics.Velocity;
-            RegularCube.Object.Rotation = glm::eulerAngles(q);
-
-            RegularCube.Object.Rotation += 0.5f * q * RegularCube.Object.Rotation * deltaTime;
-            RegularCube.Object.Rotation = glm::normalize(RegularCube.Object.Rotation);
-
+            
+            RegularCube.Object.Rotation += RegularCube.Physics.RotationVelocity;
+            
             *Cube = RegularCube;
         }
 
@@ -249,12 +229,12 @@ namespace Physics {
 
                         if (!CubeAR.Physics.Anchored) {
                             CubeAR.Physics.Velocity -= invMassA * impulse;
-                            CubeAR.Physics.RotationVelocity -= CubeAR.Physics.InvInertiaTensorWorld * glm::cross(ra, impulse);
+                            //CubeAR.Physics.RotationVelocity -= CubeAR.Physics.InvInertiaTensorWorld * glm::cross(ra, impulse);
                         }
 
                         if (!CubeBR.Physics.Anchored) {
                             CubeBR.Physics.Velocity += invMassB * impulse;
-                            CubeBR.Physics.RotationVelocity += CubeBR.Physics.InvInertiaTensorWorld * glm::cross(rb, impulse);
+                            //CubeBR.Physics.RotationVelocity += CubeBR.Physics.InvInertiaTensorWorld * glm::cross(rb, impulse);
                         }
 
                     }

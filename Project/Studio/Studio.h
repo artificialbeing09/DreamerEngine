@@ -266,7 +266,7 @@ namespace Studio {
 
     int Counter = 0;
 
-    char PropertyValueBuf[256][256];
+    char* PropertyValueBuf[256];
 
     void GUIRender() {
         if (BarInfoEnabled) {
@@ -328,7 +328,13 @@ namespace Studio {
                             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.0f, 0.0f, 1.0f));
                         }
 
-                        if (ImGui::Button((*CurrentText)->GetName().c_str())) {
+                        string Name = "null";
+
+                        if ((*CurrentText) != NULL) {
+                            Name = (*CurrentText)->GetName();
+                        }
+
+                        if (ImGui::Button(Name.c_str())) {
                             if (ObjectEnabled) {
                                 PropertyInstanceAdorneeEnabled = false;
                             }
@@ -346,6 +352,7 @@ namespace Studio {
                         LuaVector* CurrentText = (LuaVector*)PropertyInfo->GetFunction(SelectedObject);
 
                         string VectorString = "";
+                        VectorString.reserve(256); // Will crash if this isn't there
 
                         VectorString += to_string(CurrentText->x) + ", ";
                         VectorString += to_string(CurrentText->y) + ", ";
@@ -575,6 +582,10 @@ namespace Studio {
         ImGui_ImplOpenGL3_Init(glsl_version);
 
         InitGUIElements();
+
+        for (int I = 0; I < 256; I++) {
+            PropertyValueBuf[I] = (char*)malloc(1024);
+        }
         
         return 0;
     }

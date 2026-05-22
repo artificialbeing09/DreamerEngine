@@ -191,6 +191,13 @@ public:
 			StoredPhysicsPrimitive = RO[RenderIndex].Physics;
 			PhysicsPrimitive = &StoredPhysicsPrimitive;
 
+			if (RenderIndex == RO.size() - 1) {
+				RO.pop_back();
+				RenderIndex = -1;
+				return;
+			}
+
+
 			Part* OtherPart = (Part*)RO.back().Storage;
 			OtherPart->RenderIndex = RenderIndex;
 			

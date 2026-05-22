@@ -2,6 +2,40 @@
 
 #include "../Base/Shader.h"
 
+
+inline glm::mat4 RotationX(float angle) {
+    float s = sin(angle);
+    float c = cos(angle);
+    return glm::mat4(
+        1.0, 0.0, 0.0, 0.0,
+        0.0, c, s, 0.0,
+        0.0, -s, c, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    );
+}
+
+inline glm::mat4 RotationY(float angle) {
+    float s = sin(angle);
+    float c = cos(angle);
+    return glm::mat4(
+        c, 0.0, -s, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        s, 0.0, c, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    );
+}
+
+inline glm::mat4 RotationZ(float angle) {
+    float s = sin(angle);
+    float c = cos(angle);
+    return glm::mat4(
+        c, s, 0.0, 0.0,
+        -s, c, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    );
+}
+
 namespace Graphics::Engine3D::Camera {
     float CameraSpeed = 1.0;
 
@@ -27,6 +61,9 @@ namespace Graphics::Engine3D::Camera {
 
     // Retrieved from Camera.Far, Camera.Close, and Camera.FOVY
     glm::mat4 CalculateProjection() {
+        if (Gl.height == 0)
+            Gl.height = 1;
+        
         return glm::perspective(FOVY, (float)Gl.width / (float)Gl.height, Close, Far);
     }
 

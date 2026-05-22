@@ -6,8 +6,6 @@
 
 3. Physics (rigid body) (partially completed)
 
-4. Studio application to build games (almost completed)
-
 6. Inbuilt animation system
 
 7. Bones/rigs (would finally require a new shader)
@@ -19,6 +17,8 @@ minor things
 1. Global shadows (not just lighting)
 
 2. Pixel specific stuff for UI
+
+1. Studio default plugins for simple tools
 
 3. Lua websockets and networking
 

@@ -563,7 +563,7 @@ namespace Texture {
 
         if (!Texture) {
             std::regex url_regex(
-                R"(http?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z]{2,}([-a-zA-Z0-9@:%_+.~#?&//=]*))"
+                R"(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z]{2,}([-a-zA-Z0-9@:%_+.~#?&//=]*))"
             );
 
             //cout << "Bad Texture: " << TextureID << endl;
@@ -581,6 +581,20 @@ namespace Texture {
                 thread t([] (string TextureID) {
                     
                     string body = "";
+
+                    string uri = TextureID.substr(0, TextureID.find_first_of('/', 10));
+
+                    string address = TextureID.substr(TextureID.find_first_of('/', 10));
+
+                    cout << "URI: " << uri << endl;
+                    cout << "Address: " << address << endl;
+
+                    httplib::Client cli(uri);
+
+                    if (auto res = cli.Get("/hi")) {
+                        cout << "Status: " << res->status << endl;
+                        body = res->body;
+                    }
 
                     int width, height, nrChannels;
                     stbi_set_flip_vertically_on_load(true);

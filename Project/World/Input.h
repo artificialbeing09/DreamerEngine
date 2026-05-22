@@ -1,8 +1,52 @@
 #pragma once
 
-#include "Instance.h"
+#include "Part.h"
 
 using namespace Scheduler::Event;
+
+
+
+// compute the near and far intersections of the cube (stored in the x and y components) using the slab method
+// no intersection means vec.x > vec.y (really tNear > tFar)
+
+// Note for self: Translating from world space to local space (relative to the cube) = inverse model matrix * world space location/direction
+// 
+// Source: https://gist.github.com/DomNomNom/46bb1ce47f68d255fd5d
+// Source 2: https://en.wikipedia.org/wiki/Slab_method
+
+glm::vec2 intersectAABB(glm::vec3 rayOrigin, glm::vec3 rayDir, glm::vec3 boxMin = glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3 boxMax = glm::vec3(0.5f, 0.5f, 0.5f)) {
+    glm::vec3 tMin = (boxMin - rayOrigin) / rayDir;
+    glm::vec3 tMax = (boxMax - rayOrigin) / rayDir;
+    glm::vec3 t1 = min(tMin, tMax);
+    glm::vec3 t2 = max(tMin, tMax);
+    float tNear = max(max(t1.x, t1.y), t1.z);
+    float tFar = min(min(t2.x, t2.y), t2.z);
+    return glm::vec2(tNear, tFar);
+};
+
+glm::mat4 GetModelMatrix(glm::vec3 Position, glm::vec3 Rotation, glm::vec3 Size) {
+    glm::mat4 T = glm::translate(glm::mat4(1.0f), Position);
+    glm::mat4 R = RotationX(Rotation.x) * RotationY(Rotation.y) * RotationZ(Rotation.z);
+    glm::mat4 S = glm::scale(glm::mat4(1.0f), Size);
+
+    return T * R * S;
+}
+
+bool RayIntersectCube(glm::vec3 rayOrigin, glm::vec3 rayDirection, RenderCubeObject_t Primitive, float& distance) {
+    glm::mat4 InverseModel = glm::inverse(GetModelMatrix(Primitive.Position, Primitive.Rotation, Primitive.Size));
+
+    glm::vec3 LocalRayOrigin = InverseModel * glm::vec4(rayOrigin, 1.0f);
+    glm::vec3 LocalRayDirection = InverseModel * glm::vec4(rayDirection, 0.0f);
+
+    glm::vec2 tnearfar = intersectAABB(LocalRayOrigin, LocalRayDirection);
+
+    if (tnearfar.x > tnearfar.y)
+        return false;
+
+    distance = (tnearfar.x >= 0.0f) ? tnearfar.x : tnearfar.y;
+
+    return tnearfar.x <= tnearfar.y && tnearfar.y >= 0.0f;
+}
 
 class Input : public Instance {
 protected:
@@ -11,6 +55,94 @@ public:
 	int InputUp = 0;
 	int WindowFocused = 0;
 	int WindowUnfocused = 0;
+
+    shared_ptr<Instance> MouseTarget = NULLInstance;
+
+    shared_ptr<Instance> GetMouseTarget() {
+        return MouseTarget;
+    }
+
+    void SetMouseTarget(shared_ptr<Instance> target) { }
+
+    int CastRayAllParts(lua_State* L) {
+        LuaVector RayOrigin = luaL_checkvector(L, 1);
+        LuaVector RayDirection = luaL_checkvector(L, 2);
+        bool ReturnClosest = lua_toboolean(L, 3);
+
+        vector<RenderObjectStore_t> PartList = {};
+
+        // filter function in param 4
+
+        if (lua_isfunction(L, 4)) {
+            
+            for (auto& List : Graphics::Engine3D::RenderObjects) {
+                for (auto& PrimitiveInfo : List.second) {
+                    Instance* Fake = (Instance*)PrimitiveInfo.Storage;
+
+                    lua_pushvalue(L, 4);
+                    lua_pushinstance(L, Fake->GetShared());
+                    lua_call(L, 1, 1);
+                    bool res = lua_toboolean(L, -1);
+                    lua_pop(L, 1);
+
+                    if (res) {
+                        PartList.push_back(PrimitiveInfo);
+                    }
+                }
+            }
+        }
+        else {
+            for (auto& List : Graphics::Engine3D::RenderObjects) {
+                for (auto& PrimitiveInfo : List.second) {
+                    PartList.push_back(PrimitiveInfo);
+                }
+            }
+        }
+
+        if (ReturnClosest) {
+            float distance = 398472983478923894.0f;
+            void* Closest = NULL;
+
+            for (auto& PrimitiveInfo : PartList) {
+                float storedist = 0.0f;
+
+                if (RayIntersectCube(glm::vec3(RayOrigin.x, RayOrigin.y, RayOrigin.z), glm::vec3(RayDirection.x, RayDirection.y, RayDirection.z), PrimitiveInfo.Object, storedist)) {
+                    if (storedist < distance) {
+                        distance = storedist;
+                        Closest = PrimitiveInfo.Storage;
+                    }
+                }
+            }
+
+            if (Closest) {
+                lua_pushinstance(L, ((Instance*)Closest)->GetShared());
+
+                return 1;
+            }
+            else {
+                return 0;
+            }
+        }
+        else {
+            lua_newtable(L);
+
+            int i = 0;
+
+            for (auto& PrimitiveInfo : PartList) {
+                float storedist = 0.0f;
+
+                if (RayIntersectCube(glm::vec3(RayOrigin.x, RayOrigin.y, RayOrigin.z), glm::vec3(RayDirection.x, RayDirection.y, RayDirection.z), PrimitiveInfo.Object, storedist)) {
+                    lua_pushinstance(L, ((Instance*)(PrimitiveInfo.Storage))->GetShared());
+                    lua_rawseti(L, -2, ++i);
+                }
+            }
+
+            return 1;
+
+        }
+
+        return 0;
+    }
 
 	Input() {
 		Type = "Input";
@@ -107,8 +239,48 @@ std::string KeyToText(int key, int scancode) { // ChatGPT provided this code.
     return "Unknown";
 }
 
+
 void InputFrameFunction(Input* InputService) {
-	static bool KeysDown[400];
+    static bool KeysDown[400];
+
+    double xpos, ypos;
+    glfwGetCursorPos(Gl.window, &xpos, &ypos);
+
+    double x = ((2.0 * xpos) / (double)Gl.width) - 1.0;
+    double y = 1.0 - ((2.0 * ypos) / (double)Gl.height);
+    double z = 1.0;
+    glm::vec3 ray_nds = glm::vec3(x, y, z);
+    glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
+    glm::vec4 ray_eye = glm::inverse(Graphics::Engine3D::Camera::CalculateProjection()) * ray_clip;
+    ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+    glm::vec3 ray_wor = glm::vec3(glm::inverse(Graphics::Engine3D::Camera::CalculateView()) * ray_eye);
+    ray_wor = glm::normalize(ray_wor);
+
+    // Ray_wor is the direction
+    // Camera position is the position
+
+    float distance = 398472983478923894.0f;
+    void* Closest = NULL;
+
+    for (auto& List : Graphics::Engine3D::RenderObjects) {
+        for (auto& PrimitiveInfo : List.second) {
+            float storedist = 0.0f;
+
+            if (RayIntersectCube(Graphics::Engine3D::Camera::Position, ray_wor, PrimitiveInfo.Object, storedist)) {
+                if (storedist < distance) {
+                    distance = storedist;
+                    Closest = PrimitiveInfo.Storage;
+                }
+            }
+        }
+    }
+
+    if (Closest) {
+        InputService->MouseTarget = ((Instance*)Closest)->GetShared();
+    }
+    else {
+        InputService->MouseTarget = NULLInstance;
+    }
 
 	for (int i = 0; i < 400; i++) {
 		if (KeysDown[i] != Gl.KeysDown[i]) {
@@ -147,5 +319,7 @@ auto eventInputInputDown = CreateLuaEventDescriptor(Input, "Input", "InputDown",
 auto eventInputInputUp = CreateLuaEventDescriptor(Input, "Input", "InputUp", Input::InputUp);
 auto eventInputWindowFocused = CreateLuaEventDescriptor(Input, "Input", "WindowFocused", Input::WindowFocused);
 auto eventInputWindowUnfocused = CreateLuaEventDescriptor(Input, "Input", "WindowUnfocused", Input::WindowUnfocused);
+auto callInputCastRayAllParts = CreateLuaNamecallDescriptor(Input, "Input", "CastRayAllParts", &Input::CastRayAllParts);
+auto propInputMouseTarget = CreatePropertyDescriptor(Input, "Input", "MouseTarget", shared_ptr<Instance>, L_Object, &Input::SetMouseTarget, &Input::GetMouseTarget);
 
 CreateClassDescriptor(Input, "Input", "Instance");

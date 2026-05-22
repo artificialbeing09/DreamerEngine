@@ -300,4 +300,12 @@ namespace Serializer {
             }
         }
     }
+
+    void LoadMap(string Name, bool ClearMap = true) {
+        string Path = "./Game" + Name;
+
+        string SerializedText = Utils::ReadFile(Path.c_str());
+
+        Serializer::DeserializeIntoObject(GetGameWorld(), SerializedText, ClearMap);
+    }
 }

@@ -15,6 +15,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 project ("Concise")
 
+set_source_files_properties("Project/main.cpp" PROPERTIES COMPILE_OPTIONS "/bigobj")
+
 add_executable(Concise Project/main.cpp)
 
 file(GLOB LUA_SOURCES

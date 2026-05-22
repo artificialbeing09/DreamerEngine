@@ -57,6 +57,8 @@ public:
 
 	inline shared_ptr<Instance> GetParent() { return Parent.lock(); }
 
+	inline shared_ptr<Instance> GetShared() { return shared_from_this(); }
+
 	inline bool IsDescendantOf(shared_ptr<Instance> OtherObject) {
 		shared_ptr<Instance> Cursor = shared_from_this();
 		

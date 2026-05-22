@@ -1,6 +1,10 @@
 #pragma once
 
 #define GLEW_STATIC
+//#define CPPHTTPLIB_OPENSSL_SUPPORT
+
+#include "httplib.h"
+
 
 #ifdef WIN32
 #include <Windows.h>
