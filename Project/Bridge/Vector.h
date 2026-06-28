@@ -192,3 +192,217 @@ namespace Vector {
         return 1;
     }
 }
+
+// TODO: world and object space math
+// up, frfont, right vectors
+// looking
+
+struct LuaCoordinateFrame {
+    glm::vec3 Position = glm::vec3(0.0, 0.0, 0.0);
+    glm::mat4 Rotation = glm::mat4(1.0f);
+};
+
+
+static int lua_pushcoordinateframe(lua_State* L, LuaCoordinateFrame v) {
+    LuaCoordinateFrame* udata = (LuaCoordinateFrame*)lua_newuserdata(L, sizeof(LuaCoordinateFrame));
+    *udata = v;
+
+    luaL_getmetatable(L, "CoordinateFrame");
+    lua_setmetatable(L, -2);
+
+    return 1;
+}
+
+LuaCoordinateFrame luaL_checkcoordinateframe(lua_State* L, int index) {
+    return *(LuaCoordinateFrame*)luaL_checkudata(L, index, "CoordinateFrame");
+}
+
+namespace CoordinateFrame {
+    static int l_Vector_new(lua_State* L) {
+        LuaCoordinateFrame Created;
+
+        double X = lua_tonumber(L, 1);
+        double Y = lua_tonumber(L, 2);
+        double Z = lua_tonumber(L, 3);
+        
+        Created.Position.x = X;
+        Created.Position.y = Y;
+        Created.Position.z = Z;
+
+        lua_pushcoordinateframe(L, Created);
+        return 1;
+    }
+
+    static int l_Vector_index(lua_State* L) {
+        LuaCoordinateFrame obj = luaL_checkcoordinateframe(L, 1);
+        const char* ckey = luaL_checkstring(L, 2);
+        string key = ckey;
+        string lkey = Utils::StrToLower(key);
+
+        if (lkey == "x") {
+            lua_pushnumber(L, obj.Position.x);
+        }
+        else if (lkey == "y") {
+            lua_pushnumber(L, obj.Position.y);
+        }
+        else if (lkey == "z") {
+            lua_pushnumber(L, obj.Position.z);
+        }
+        else {
+            lua_pushnil(L);
+        }
+
+        return 1;
+    }
+
+    static int l_Vector_eq(lua_State* L) {
+        LuaCoordinateFrame obj = luaL_checkcoordinateframe(L, 1);
+        LuaCoordinateFrame obj2 = luaL_checkcoordinateframe(L, 2);
+
+        lua_pushboolean(L, memcmp(&obj, &obj2, sizeof(obj)) == 0);
+
+        return 1;
+    }
+
+    static int l_Vector_add(lua_State* L) {
+        LuaCoordinateFrame obj = luaL_checkcoordinateframe(L, 1);
+        LuaCoordinateFrame obj2 = luaL_checkcoordinateframe(L, 2);
+
+        obj.Position += obj2.Position;
+        obj.Rotation *= obj2.Rotation;
+
+        lua_pushcoordinateframe(L, obj);
+
+        return 1;
+    }
+
+    static int l_Vector_sub(lua_State* L) {
+        LuaCoordinateFrame obj = luaL_checkcoordinateframe(L, 1);
+        LuaCoordinateFrame obj2 = luaL_checkcoordinateframe(L, 2);
+
+        obj.Position -= obj2.Position;
+        obj.Rotation *= glm::inverse(obj2.Rotation);
+
+        lua_pushcoordinateframe(L, obj);
+
+        return 1;
+    }
+
+    static int l_Vector_mul(lua_State* L) {
+        LuaCoordinateFrame obj = luaL_checkcoordinateframe(L, 1);
+
+        if (lua_type(L, 2) == LUA_TNUMBER) {
+            double obj2 = luaL_checknumber(L, 2);
+
+            obj.Position *= obj2;
+            obj.Rotation *= obj2;
+
+            lua_pushcoordinateframe(L, obj);
+
+            return 1;
+        }
+
+        LuaCoordinateFrame obj2 = luaL_checkcoordinateframe(L, 2);
+
+
+        obj.Position *= obj2.Position;
+
+        obj.Rotation *= obj2.Rotation;
+        obj.Rotation *= obj2.Rotation;
+
+        lua_pushcoordinateframe(L, obj);
+
+        return 1;
+    }
+
+    static int l_Vector_div(lua_State* L) {
+        LuaCoordinateFrame obj = luaL_checkcoordinateframe(L, 1);
+
+        if (lua_type(L, 2) == LUA_TNUMBER) {
+            double obj2 = luaL_checknumber(L, 2);
+
+            obj.Position /= obj2;
+            obj.Rotation *= ( 1.0 / obj2 );
+
+            lua_pushcoordinateframe(L, obj);
+
+            return 1;
+        }
+
+        LuaCoordinateFrame obj2 = luaL_checkcoordinateframe(L, 2);
+
+
+        obj.Position /= obj2.Position;
+
+        obj.Rotation *= glm::inverse(obj2.Rotation);
+        obj.Rotation *= glm::inverse(obj2.Rotation);
+
+        lua_pushcoordinateframe(L, obj);
+
+        return 1;
+    }
+
+    static int l_Vector_unm(lua_State* L) {
+        LuaCoordinateFrame obj = luaL_checkcoordinateframe(L, 1);
+
+        obj.Position = -obj.Position;
+        obj.Rotation = glm::inverse(obj.Rotation);
+
+        lua_pushcoordinateframe(L, obj);
+
+        return 1;
+    }
+
+    static int l_Vector_tostring(lua_State* L) {
+        LuaCoordinateFrame obj = luaL_checkcoordinateframe(L, 1);
+
+        string S = to_string(obj.Position.x) + ", " + to_string(obj.Position.y) + ", " + to_string(obj.Position.z);
+
+        lua_pushstring(L, S.c_str());
+
+        return 1;
+    }
+
+    int luaopen_vector(lua_State* L) {
+        luaL_newmetatable(L, "CoordinateFrame");
+
+        lua_pushstring(L, "__index");
+        lua_pushcfunction(L, l_Vector_index);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__eq");
+        lua_pushcfunction(L, l_Vector_eq);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__add");
+        lua_pushcfunction(L, l_Vector_add);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__sub");
+        lua_pushcfunction(L, l_Vector_sub);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__mul");
+        lua_pushcfunction(L, l_Vector_mul);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__div");
+        lua_pushcfunction(L, l_Vector_div);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__unm");
+        lua_pushcfunction(L, l_Vector_unm);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__tostring");
+        lua_pushcfunction(L, l_Vector_tostring);
+        lua_settable(L, -3);
+
+        lua_pop(L, 1);
+
+        lua_register(L, "CoordinateFrame", l_Vector_new);
+        lua_register(L, "CFrame", l_Vector_new);
+        
+        return 1;
+    }
+}

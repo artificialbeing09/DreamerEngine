@@ -12,6 +12,7 @@ public:
 	RenderCubeObject_t* Primitive = &StoredPrimitive;
 	PhysicsExtraInformation_t* PhysicsPrimitive = &StoredPhysicsPrimitive;
 	string Shape = "";
+	LuaVector StoredRotation = { 0.0, 0.0, 0.0 };
 
 	inline bool GetAnchored() { return PhysicsPrimitive->Anchored; }
 
@@ -29,9 +30,12 @@ public:
 
 	inline void SetPosition(LuaVector NewPosition) { Primitive->Position = glm::vec3(NewPosition.x, NewPosition.y, NewPosition.z); }
 
-	inline LuaVector GetRotation() { return LuaVector(Primitive->Rotation.x, Primitive->Rotation.y, Primitive->Rotation.z); }
+	inline LuaVector GetRotation() { return StoredRotation; }
 
-	inline void SetRotation(LuaVector NewRotation) { Primitive->Rotation = glm::vec3(NewRotation.x, NewRotation.y, NewRotation.z); }
+	inline void SetRotation(LuaVector NewRotation) { 
+		Primitive->Rotation = RotationX(NewRotation.x) * RotationY(NewRotation.y) * RotationZ(NewRotation.z);
+		StoredRotation = NewRotation;
+	}
 
 	inline LuaVector GetSize() { return LuaVector(Primitive->Size.x, Primitive->Size.y, Primitive->Size.z); }
 

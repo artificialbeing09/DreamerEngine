@@ -384,7 +384,19 @@ namespace Studio {
                                 }
                             }
 
-                            LuaVector NewVec = { Lista[0], Lista[1], Lista[2], Lista[3] };
+                            LuaVector NewVec = { };
+
+                            for (int K = 0; K < Lista.size(); K++)
+                                if (K == 0)
+                                    NewVec.x = Lista[K];
+                                else if (K == 1)
+                                    NewVec.y = Lista[K];
+                                else if (K == 2)
+                                    NewVec.z = Lista[K];
+                                else if (K == 3)
+                                    NewVec.a = Lista[K];
+
+                            
 
                             PropertyInfo->SetFunction(SelectedObject, &NewVec);
                         }
@@ -607,13 +619,14 @@ namespace Studio {
 
         if (!ConfigFile) {
             cout << "Config file failed to open." << endl;
+        }
+        else {
+            fread(&EngineConfiguration, sizeof(EngineConfiguration), 1, ConfigFile);
 
-            return;
+            fclose(ConfigFile);
         }
 
-        fread(&EngineConfiguration, sizeof(EngineConfiguration), 1, ConfigFile);
-
-        fclose(ConfigFile);
+        
 
         if (EngineConfiguration.ShadowResolution == 0) {
             EngineConfiguration_t New;

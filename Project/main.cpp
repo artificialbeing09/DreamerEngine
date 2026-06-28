@@ -12,6 +12,7 @@ int main()
 
     Scheduler::Start();
 
+
     Graphics::Engine3D::CreateMeshVector("Teapot", ObjParser::DefaultParseObj(Utils::ReadFile("Engine/teapot.obj")));
     Graphics::Engine3D::CreateMeshVector("Arrow", ObjParser::DefaultParseObj(Utils::ReadFile("Engine/arrow.obj")));
 
@@ -63,6 +64,7 @@ int main()
 				TextObjectFrameFunction(o.get());
 			}
 		}
+
 
         Scheduler::SchedulerStep();
         

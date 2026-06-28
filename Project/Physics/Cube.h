@@ -39,26 +39,26 @@ namespace Physics {
     }
 
     inline bool CubesIntersect(
-        glm::vec3 PositionA, glm::vec3 RotationA, glm::vec3 SizeA,
-        glm::vec3 PositionB, glm::vec3 RotationB, glm::vec3 SizeB,
+        glm::vec3 PositionA, glm::mat4 RotationA, glm::vec3 SizeA,
+        glm::vec3 PositionB, glm::mat4 RotationB, glm::vec3 SizeB,
         glm::vec3& MTVAxis) {
 
-        glm::mat4 RotatedA = RotationX(RotationA.x) * RotationY(RotationA.y) * RotationZ(RotationA.z);
-        glm::mat4 RotatedB = RotationX(RotationB.x) * RotationY(RotationB.y) * RotationZ(RotationB.z);
+        glm::mat4 RotatedA = glm::mat4(RotationA);
+        glm::mat4 RotatedB = glm::mat4(RotationB);
 
         glm::vec3 HalfSizeA = SizeA / 2.0f;
         glm::vec3 HalfSizeB = SizeB / 2.0f;
 
         glm::vec3 AxesA[3] = {
-            RotatedA * glm::vec4(1.0, 0.0, 0.0, 0.0),
-            RotatedA * glm::vec4(0.0, 1.0, 0.0, 0.0),
-            RotatedA * glm::vec4(0.0, 0.0, 1.0, 0.0)
+            RotatedA * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f),
+            RotatedA * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f),
+            RotatedA * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f)
         };
 
         glm::vec3 AxesB[3] = {
-            RotatedB * glm::vec4(1.0, 0.0, 0.0, 0.0),
-            RotatedB * glm::vec4(0.0, 1.0, 0.0, 0.0),
-            RotatedB * glm::vec4(0.0, 0.0, 1.0, 0.0)
+            RotatedB * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f),
+            RotatedB * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f),
+            RotatedB * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f)
         };
 
         int AllAxesI = 0;
@@ -103,6 +103,7 @@ namespace Physics {
             float CenterDistance = abs(glm::dot(DistanceBetweenCenters, glm::normalize(Axis)));
 
             float Overlap = (ProjectionA + ProjectionB) - CenterDistance;
+
             if (Overlap < 0)
                 return false; // Separating axis found
 
@@ -145,7 +146,7 @@ namespace Physics {
 
             RegularCube.Object.Position += RegularCube.Physics.Velocity;
             
-            RegularCube.Object.Rotation += RegularCube.Physics.RotationVelocity;
+            //RegularCube.Object.Rotation += RegularCube.Physics.RotationVelocity;
             
             *Cube = RegularCube;
         }
@@ -156,10 +157,10 @@ namespace Physics {
             RenderObjectStore_t* CubeA = PhysicsObjects[I];
             RenderObjectStore_t CubeAR = *PhysicsObjects[I];
 
-            glm::mat3 R = glm::mat3_cast(glm::quat(CubeAR.Object.Rotation));
+            glm::mat4 R = CubeAR.Object.Rotation;
 
             CubeAR.Physics.InvInertiaTensorWorld =
-                R * CubeAR.Physics.InvInertiaTensorLocal * glm::transpose(R);
+                R * glm::mat4(CubeAR.Physics.InvInertiaTensorLocal) * glm::transpose(R);
 
             for (int J = I + 1; J < PhysicsObjects.size(); J++) {
                 RenderObjectStore_t* CubeB = PhysicsObjects[J];
@@ -182,10 +183,10 @@ namespace Physics {
                     CubeBR.Object.Rotation,
                     CubeBR.Object.Size, mtv)) {
 
-                    glm::mat3 R2 = glm::mat3_cast(glm::quat(CubeBR.Object.Rotation));
+                    glm::mat4 R2 = CubeBR.Object.Rotation;
 
                     CubeBR.Physics.InvInertiaTensorWorld =
-                        R2 * CubeBR.Physics.InvInertiaTensorLocal * glm::transpose(R2);
+                        R2 * glm::mat4(CubeBR.Physics.InvInertiaTensorLocal) * glm::transpose(R2);
 
                     glm::vec3 normal = glm::normalize(mtv);
 

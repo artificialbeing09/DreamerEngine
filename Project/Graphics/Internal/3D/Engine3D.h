@@ -4,13 +4,58 @@
 #include "Sky.h"
 
 namespace Graphics::Engine3D {
+    map<string, vector<RenderCubeObject_t>> FilteredRenderObjects = { };
+    map<string, vector<RenderCubeObject_t>> FilteredTransparentRenderObjects = { };
+
+    void MidCalculations() {
+        auto Planes = Camera::ExtractFrustumPlanes();
+
+        for (const auto& [key, ObjectList] : RenderObjects) {
+            glm::vec3 CameraPos = Camera::Position;
+
+            vector<RenderCubeObject_t>& Visible = FilteredRenderObjects[key];
+            vector<RenderCubeObject_t>& Opaque = FilteredTransparentRenderObjects[key];
+
+            Visible.clear();
+            Opaque.clear();
+
+            if (Visible.max_size() < ObjectList.size())
+                Visible.reserve(ObjectList.size());
+
+            if (Opaque.max_size() < ObjectList.size())
+                Opaque.reserve(ObjectList.size());
+            
+            for (auto& Lp : ObjectList) {
+                auto L = Lp.Object;
+
+                if (!Camera::IsSphereVisible(L.Position, L.SizeLength, Planes)) {
+                    L.CameraDist = 0.0;
+                    continue;
+                }
+
+                if (L.Transparency < 0.99f) {
+                    glm::vec3 toCamera = L.Position - CameraPos;
+                    float distSq = glm::dot(toCamera, toCamera);
+                    L.CameraDist = distSq;
+
+                    Visible.push_back(L);
+                }
+                else {
+                    Opaque.push_back(L);
+                }
+            }
+
+            std::sort(Visible.begin(), Visible.end(),
+                [](const auto& a, const auto& b) { return a.CameraDist > b.CameraDist; });
+        }
+    }
+
 	void Render() {
+        thread TC(MidCalculations);
+
         PreRender();
 
         RenderShadowPass();
-
-		static map<string, vector<RenderCubeObject_t>> FilteredRenderObjects = { };
-		static map<string, vector<RenderCubeObject_t>> FilteredTransparentRenderObjects = { };
 
         /*Skybox*/ {
             uint16_t Texture[6] = { 0 };
@@ -21,57 +66,23 @@ namespace Graphics::Engine3D {
                 Texture[I] = Texture::GetTextureByID(TextureID);
             }
 
-            RenderCubeObject_t Skybox = {
-               Camera::Position,
-               Texture[0], Texture[1],
-               {3.14, 0.0, 0.0},
-               Texture[2], Texture[3],
-               {-100.0, -100.0, -100.0},
-               Texture[4], Texture[5],
-               {0.0, 0.0, 0.0},
-               1.0f
-            };
-
+            RenderCubeObject_t Skybox;
+            
+            Skybox.Position = Camera::Position;
+            Skybox.Texture0 = Texture[0];
+            Skybox.Texture1 = Texture[1];
+            Skybox.Size = glm::vec3(-100.0, -100.0, -100.0);
+            Skybox.Texture2 = Texture[2];
+            Skybox.Texture3 = Texture[3];
+            Skybox.Texture4 = Texture[4];
+            Skybox.Texture5 = Texture[5];
             RenderObjectsOfMesh(Meshes["Cube"], { Skybox });
 
             glClear(GL_DEPTH_BUFFER_BIT);
         }
 
         /*3D*/ {
-            auto Planes = Camera::ExtractFrustumPlanes();
-
-            for (const auto& [key, ObjectList] : RenderObjects) {
-                vector<RenderCubeObject_t> Visible;
-                vector<RenderCubeObject_t> Opaque;
-
-                Visible.reserve(ObjectList.size());
-                Opaque.reserve(ObjectList.size());
-
-                glm::vec3 CameraPos = Camera::Position;
-
-                for (auto& Lp : ObjectList) {
-                    auto L = Lp.Object;
-
-                    if (!Camera::IsSphereVisible(L.Position, L.SizeLength, Planes))
-                        continue;
-
-                    if (L.Transparency < 0.99f) {
-                        glm::vec3 toCamera = L.Position - CameraPos;
-                        float distSq = glm::dot(toCamera, toCamera);
-                        L.Storage2 = distSq;
-                        Visible.emplace_back(L);
-                    }
-                    else {
-                        Opaque.emplace_back(L);
-                    }
-                }
-
-                std::sort(Visible.begin(), Visible.end(),
-                    [](const auto& a, const auto& b) { return a.Storage2 > b.Storage2; });
-
-                FilteredRenderObjects[key] = std::move(Opaque);
-                FilteredTransparentRenderObjects[key] = std::move(Visible);
-            }
+            TC.join();
 
             for (const auto& [key, ObjectList] : FilteredRenderObjects) {
                 RenderObjectsOfMesh(Meshes[key], ObjectList);

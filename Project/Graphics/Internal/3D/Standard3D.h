@@ -11,18 +11,16 @@ struct RenderCubeObject_t {
     glm::vec3 Position = glm::vec3(0.0, 0.0, 0.0);
     uint16_t Texture0 = 0;
     uint16_t Texture1 = 0;
-    glm::vec3 Rotation = glm::vec3(0.0, 0.0, 0.0);
+    glm::vec3 Color = glm::vec3(0.0, 0.0, 0.0);
     uint16_t Texture2 = 0;
     uint16_t Texture3 = 0;
     glm::vec3 Size = glm::vec3(1.0, 1.0, 1.0);
     uint16_t Texture4 = 0;
     uint16_t Texture5 = 0;
-    glm::vec3 Color = glm::vec3(0.0, 0.0, 0.0);
+    glm::mat4 Rotation = glm::mat4(1.0f);
     float Transparency = 0.0;
     float SizeLength = 2;
-    float Storage2 = 2;
-    float Storage3 = 0;
-    float Storage4 = 0;
+    float CameraDist = 2; // Calculated every render cycle
 };
 
 struct PhysicsExtraInformation_t {
@@ -34,6 +32,9 @@ struct PhysicsExtraInformation_t {
 
     glm::mat3 InertiaTensorWorld = glm::mat3(1.0);
     glm::mat3 InvInertiaTensorWorld = glm::mat3(1.0);
+
+    
+
     double Mass = 1.0;
     bool Anchored = false;
 };

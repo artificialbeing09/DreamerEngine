@@ -24,9 +24,9 @@ glm::vec2 intersectAABB(glm::vec3 rayOrigin, glm::vec3 rayDir, glm::vec3 boxMin 
     return glm::vec2(tNear, tFar);
 };
 
-glm::mat4 GetModelMatrix(glm::vec3 Position, glm::vec3 Rotation, glm::vec3 Size) {
+glm::mat4 GetModelMatrix(glm::vec3 Position, glm::mat4 Rotation, glm::vec3 Size) {
     glm::mat4 T = glm::translate(glm::mat4(1.0f), Position);
-    glm::mat4 R = RotationX(Rotation.x) * RotationY(Rotation.y) * RotationZ(Rotation.z);
+    glm::mat4 R = glm::mat4(Rotation);
     glm::mat4 S = glm::scale(glm::mat4(1.0f), Size);
 
     return T * R * S;
@@ -48,11 +48,16 @@ bool RayIntersectCube(glm::vec3 rayOrigin, glm::vec3 rayDirection, RenderCubeObj
     return tnearfar.x <= tnearfar.y && tnearfar.y >= 0.0f;
 }
 
+double LastMouseX = 0.0;
+double LastMouseY = 0.0;
+
+
 class Input : public Instance {
 protected:
 public:
 	int InputDown = 0;
 	int InputUp = 0;
+    int MouseMoved = 0;
 	int WindowFocused = 0;
 	int WindowUnfocused = 0;
 
@@ -63,6 +68,32 @@ public:
     }
 
     void SetMouseTarget(shared_ptr<Instance> target) { }
+
+    double GetMouseX() {
+        return LastMouseX;
+    }
+
+    double GetMouseY() {
+        return LastMouseY;
+    }
+
+    void SetMouseX(double X) { 
+        double xpos, ypos;
+        glfwGetCursorPos(Gl.window, &xpos, &ypos);
+
+        LastMouseX = X;
+
+        glfwSetCursorPos(Gl.window, X, ypos);
+    }
+
+    void SetMouseY(double Y) {
+        double xpos, ypos;
+        glfwGetCursorPos(Gl.window, &xpos, &ypos);
+
+        LastMouseY = Y;
+
+        glfwSetCursorPos(Gl.window, xpos, Y);
+    }
 
     int CastRayAllParts(lua_State* L) {
         LuaVector RayOrigin = luaL_checkvector(L, 1);
@@ -312,14 +343,24 @@ void InputFrameFunction(Input* InputService) {
 
 		WindowLastFocused = WindowFocused;
 	}
+
+    if (LastMouseX != xpos && LastMouseY != ypos) {
+        Scheduler::Event::FireListenerInstance(InputService, "MouseMoved", { GetEventParamFromT(xpos - LastMouseX), GetEventParamFromT(ypos - LastMouseY) });
+    }
+
+    LastMouseX = xpos;
+    LastMouseY = ypos;
 }
 
 auto eventInputInputPressed = CreateLuaEventDescriptor(Input, "Input", "InputPressed", Input::InputDown);
 auto eventInputInputDown = CreateLuaEventDescriptor(Input, "Input", "InputDown", Input::InputDown);
 auto eventInputInputUp = CreateLuaEventDescriptor(Input, "Input", "InputUp", Input::InputUp);
+auto eventInputMouseMoved = CreateLuaEventDescriptor(Input, "Input", "MouseMoved", Input::MouseMoved);
 auto eventInputWindowFocused = CreateLuaEventDescriptor(Input, "Input", "WindowFocused", Input::WindowFocused);
 auto eventInputWindowUnfocused = CreateLuaEventDescriptor(Input, "Input", "WindowUnfocused", Input::WindowUnfocused);
 auto callInputCastRayAllParts = CreateLuaNamecallDescriptor(Input, "Input", "CastRayAllParts", &Input::CastRayAllParts);
 auto propInputMouseTarget = CreatePropertyDescriptor(Input, "Input", "MouseTarget", shared_ptr<Instance>, L_Object, &Input::SetMouseTarget, &Input::GetMouseTarget);
+auto propInputMouseX = CreatePropertyDescriptor(Input, "Input", "MouseX", double, L_Number, &Input::SetMouseX, &Input::GetMouseX);
+auto propInputMouseY = CreatePropertyDescriptor(Input, "Input", "MouseY", double, L_Number, &Input::SetMouseY, &Input::GetMouseY);
 
 CreateClassDescriptor(Input, "Input", "Instance");
