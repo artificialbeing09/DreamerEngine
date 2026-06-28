@@ -1,12 +1,13 @@
 #pragma once
 
-#include "Testing/Test.h"
-#include "Graphics/Graphics.h"
-
 #define GL_SILENCE_DEPRECATION
 #include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
+
+#include "Testing/Test.h"
+#include "Graphics/Graphics.h"
 
 #include "TextEditor.h"
 #include "LoadAndSave/Serializer.h"
@@ -281,8 +282,45 @@ namespace Studio {
         ImGui::NewFrame();
 
         Counter++;
+
+
+        ImGuiID dockspace_id = ImGui::GetID("My Dockspace");
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+        // Create settings
+        if (ImGui::DockBuilderGetNode(dockspace_id) == nullptr)
+        {
+            ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
+            ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
+            ImGuiID dock_id_left = 0;
+            ImGuiID dock_id_main = dockspace_id;
+            ImGui::DockBuilderSplitNode(dock_id_main, ImGuiDir_Left, 0.20f, &dock_id_left, &dock_id_main);
+            ImGuiID dock_id_left_top = 0;
+            ImGuiID dock_id_left_bottom = 0;
+            ImGui::DockBuilderSplitNode(dock_id_left, ImGuiDir_Up, 0.50f, &dock_id_left_top, &dock_id_left_bottom);
+            ImGui::DockBuilderDockWindow("Scene", dock_id_main);
+            ImGui::DockBuilderDockWindow("Properties", dock_id_left_top);
+            ImGui::DockBuilderDockWindow("Explorer", dock_id_left_bottom);
+            ImGui::DockBuilderFinish(dockspace_id);
+        }
+
+        // Submit dockspace
+        ImGui::DockSpaceOverViewport(dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
+
         
         {
+            ImGui::Begin("Scene");
+
+            ImVec2 windowsize = ImGui::GetWindowSize();
+
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+
+            ImGui::GetWindowDrawList()->AddImage(
+                (void*)Graphics::Engine3D::FBOtextureMap, pos,
+                ImVec2(pos.x + windowsize.x / 2, pos.y + windowsize.y / 2), ImVec2(0, 1), ImVec2(1, 0));
+
+            ImGui::End();
+
             ImGui::Begin("Explorer"); 
 
             RenderDescendants(GetGameWorld(), 0);
@@ -583,6 +621,7 @@ namespace Studio {
         ImGuiIO& io = ImGui::GetIO(); (void)io;
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
         ImGui::StyleColorsDark();
         

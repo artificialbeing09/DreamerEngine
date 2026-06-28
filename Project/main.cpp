@@ -46,6 +46,34 @@ int main()
 	auto SceneUI = Services::GetService<UIScene>("UIScene");
     auto InputService = Services::GetService<Input>("Input");
 
+    glGenFramebuffers(1, &Graphics::Engine3D::defaultFBO);
+
+    glGenTextures(1, &Graphics::Engine3D::FBOtextureMap);
+    glBindTexture(GL_TEXTURE_2D, Graphics::Engine3D::FBOtextureMap);
+
+    glTexStorage2D(
+        GL_TEXTURE_2D,
+        1, // mip levels
+        (GLenum)GL_RGBA,
+        (GLsizei)1024,
+        (GLsizei)1024
+    );
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // Framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, Graphics::Engine3D::defaultFBO);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, Graphics::Engine3D::FBOtextureMap, 0);
+
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+
     while (!Gl.ShouldClose()) {
         i++;
         Utils::FrameRate::Cap();
@@ -67,6 +95,8 @@ int main()
 
 
         Scheduler::SchedulerStep();
+
+        glBindFramebuffer(GL_FRAMEBUFFER, Graphics::Engine3D::defaultFBO);
         
         Graphics::Engine3D::Render();
 
@@ -85,6 +115,8 @@ int main()
 		}
 
         Graphics::Engine2D::Render();
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         Studio::GUIRender();
         

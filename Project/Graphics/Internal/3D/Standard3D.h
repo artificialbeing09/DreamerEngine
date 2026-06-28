@@ -198,6 +198,9 @@ namespace Graphics::Engine3D {
     deque<LightObjectStore_t> Lights = {  }; //{glm::vec3(12.0f, 40.0f, 12.0f)}, {}
     RenderLightObject_t RenderLights[20];
 
+    unsigned int defaultFBO = 0;
+    unsigned int FBOtextureMap = 0;
+
     unsigned int depthFBO;
     unsigned int depthMap;
     unsigned int SHADOW_SIZE = 512;
@@ -275,7 +278,7 @@ namespace Graphics::Engine3D {
             }
         }
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, defaultFBO);
 
         Gl.PreRender();
     }
@@ -319,7 +322,7 @@ namespace Graphics::Engine3D {
         glDrawArraysInstanced(Gl.Triangles, 0, (GLsizei)Mesh.VertexCount, (GLsizei)Objects.size());
     }
 
-    void initShadowMap() { // GPT code, which will soon be completely transformed into normal working code knowing me.
+    void initShadowMap() {
         glGenFramebuffers(1, &depthFBO);
 
         // Create depth texture array
