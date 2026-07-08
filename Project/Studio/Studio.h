@@ -269,6 +269,12 @@ namespace Studio {
 
     char* PropertyValueBuf[256];
 
+    int SceneWindowSizeX = 0;
+    int SceneWindowSizeY = 0;
+
+    int SceneCursorOffsetX = 0;
+    int SceneCursorOffsetY = 0;
+
     void GUIRender() {
         if (BarInfoEnabled) {
             TaskbarInfoRender();
@@ -309,17 +315,29 @@ namespace Studio {
 
         
         {
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
             ImGui::Begin("Scene");
 
             ImVec2 windowsize = ImGui::GetWindowSize();
 
             ImVec2 pos = ImGui::GetCursorScreenPos();
 
+            ImVec2 available_space = ImVec2(ImGui::GetWindowSize().x + ImGui::GetWindowPos().x, ImGui::GetWindowSize().y);
+
             ImGui::GetWindowDrawList()->AddImage(
                 (void*)Graphics::Engine3D::FBOtextureMap, pos,
-                ImVec2(pos.x + windowsize.x / 2, pos.y + windowsize.y / 2), ImVec2(0, 1), ImVec2(1, 0));
+                available_space, ImVec2(0, 1), ImVec2(1, 0));
+
+            SceneWindowSizeX = available_space.x - pos.x;
+            SceneWindowSizeY = available_space.y - pos.y;
+
+            SceneCursorOffsetX = pos.x;
+            SceneCursorOffsetY = pos.y;
 
             ImGui::End();
+
+            ImGui::PopStyleVar();
 
             ImGui::Begin("Explorer"); 
 
@@ -556,7 +574,7 @@ namespace Studio {
                 if (CurrentMapSelected.size() == 0) {
                     auto f = pfd::save_file("Choose file to save",
                         filesystem::current_path().string() + "\\Game\\main.map",
-                        { "Concise Game Map File (.map)", "*.map" },
+                        { "Dreamer Engine Game Map File (.map)", "*.map" },
                         pfd::opt::force_overwrite);
 
                     CurrentMapSelected = f.result();
@@ -570,7 +588,7 @@ namespace Studio {
             if (ImGui::Button("Save Current Map As...")) {
                 auto f = pfd::save_file("Choose file to save",
                     filesystem::current_path().string() + "\\Game\\main.map",
-                    { "Concise Game Map File (.map)", "*.map" },
+                    { "Dreamer Engine Game Map File (.map)", "*.map" },
                     pfd::opt::force_overwrite);
 
                 CurrentMapSelected = f.result();
@@ -583,7 +601,7 @@ namespace Studio {
             if (ImGui::Button("Load Map From File")) {
                 auto f = pfd::open_file("Choose file to open",
                     filesystem::current_path().string() + "\\Game",
-                    { "Concise Game Map File (.map)", "*.map" },
+                    { "Dreamer Engine Game Map File (.map)", "*.map" },
                     pfd::opt::none);
 
                 if (f.result().size() > 0) {
@@ -677,7 +695,7 @@ namespace Studio {
             return;
 
         float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor());
-        GLFWwindow* window = glfwCreateWindow((int)(600 * main_scale), (int)(600 * main_scale), "Concise Pre-configuration", nullptr, nullptr);
+        GLFWwindow* window = glfwCreateWindow((int)(600 * main_scale), (int)(600 * main_scale), "Dreamer Engine Pre-configuration", nullptr, nullptr);
         if (window == nullptr)
             return;
         glfwMakeContextCurrent(window);

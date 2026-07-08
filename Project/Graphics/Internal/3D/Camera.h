@@ -61,10 +61,10 @@ namespace Graphics::Engine3D::Camera {
 
     // Retrieved from Camera.Far, Camera.Close, and Camera.FOVY
     glm::mat4 CalculateProjection() {
-        if (Gl.height == 0)
-            Gl.height = 1;
+        if (Gl.h == 0)
+            Gl.h = 1;
         
-        return glm::perspective(FOVY, (float)Gl.width / (float)Gl.height, Close, Far);
+        return glm::perspective(FOVY, (float)Gl.w / (float)Gl.h, Close, Far);
     }
 
     struct Plane {

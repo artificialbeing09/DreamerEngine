@@ -33,11 +33,11 @@ public:
 	float MousePosY = 0.0;
 
 	LuaVector GetBounds() {
-		float SizeX = Gl.width * Object.Size.x;
-		float SizeY = Gl.height * Object.Size.y;
+		float SizeX = Gl.w * Object.Size.x;
+		float SizeY = Gl.h * Object.Size.y;
 
-		float PosX = Gl.width * Object.Position.x;
-		float PosY = Gl.height * Object.Position.y;
+		float PosX = Gl.w * Object.Position.x;
+		float PosY = Gl.h * Object.Position.y;
 
 		return { PosX - (SizeX / 2.0), PosY - (SizeY / 2.0), PosX + (SizeX / 2.0), PosY + (SizeY / 2.0) };
 	}
@@ -46,10 +46,10 @@ public:
 		Object.Size = Size;
 
 		if (SizeConstraint == TextObject::YY) {
-			Object.Size.x *= ((float)Gl.height / (float)Gl.width);
+			Object.Size.x *= ((float)Gl.h / (float)Gl.w);
 		}
 		else if (SizeConstraint == TextObject::XX) {
-			Object.Size.y *= ((float)Gl.width / (float)Gl.height);
+			Object.Size.y *= ((float)Gl.w / (float)Gl.h);
 		}
 
 		if (AssociatedObject != -1) {
@@ -169,27 +169,8 @@ public:
 	}
 };
 
-int idf = 0;
-
-double relativeCursorX = 0.0;
-double relativeCursorY = 0.0;
-
 void PreTextObjectFunction() {
-	int fbWidth, fbHeight;
-	glfwGetFramebufferSize(Gl.window, &fbWidth, &fbHeight);
 
-	int winWidth, winHeight;
-	glfwGetWindowSize(Gl.window, &winWidth, &winHeight);
-
-	double scaleX = (double)fbWidth / winWidth;
-	double scaleY = (double)fbHeight / winHeight;
-
-	glfwGetCursorPos(Gl.window, &relativeCursorX, &relativeCursorY);
-
-	relativeCursorX *= scaleX;
-	relativeCursorY *= scaleY;
-
-	relativeCursorY = Gl.height - relativeCursorY;
 }
 
 void TextObjectFrameFunction(Instance* o) {
@@ -201,8 +182,8 @@ void TextObjectFrameFunction(Instance* o) {
 	bool RightMouseDown = false;
 	bool MiddleMouseDown = false;
 
-	if (relativeCursorX > Bounds.x && relativeCursorY > Bounds.y &&
-		relativeCursorX < Bounds.z && relativeCursorY < Bounds.a) {
+	if (Gl.MouseX > Bounds.x && Gl.MouseY > Bounds.y &&
+		Gl.MouseX < Bounds.z && Gl.MouseY < Bounds.a) {
 		
 		if (!text->Entered)
 			Scheduler::Event::FireListenerInstance(o, "MouseEntered");
@@ -211,10 +192,10 @@ void TextObjectFrameFunction(Instance* o) {
 		RightMouseDown = Gl.KeysDown[GLFW_MOUSE_BUTTON_RIGHT];
 		MiddleMouseDown = Gl.KeysDown[GLFW_MOUSE_BUTTON_MIDDLE];
 
-		if (relativeCursorX != text->MousePosX || relativeCursorY != text->MousePosY) {
+		if (Gl.MouseX != text->MousePosX || Gl.MouseY != text->MousePosY) {
 			Scheduler::Event::FireListenerInstance(o, "MouseMoved");
-			text->MousePosX = (float)relativeCursorX;
-			text->MousePosY = (float)relativeCursorY;
+			text->MousePosX = (float)Gl.MouseX;
+			text->MousePosY = (float)Gl.MouseY;
 		}
 
 		text->Entered = true;

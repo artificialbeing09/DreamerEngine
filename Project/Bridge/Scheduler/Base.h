@@ -195,10 +195,16 @@ namespace Scheduler {
     void ExitAllThreadsWithIdentity(int Identity) {
         auto Scheduler = GetScheduler();
 
-        for (auto& Index : Scheduler->Threads) {
+        vector<lua_State*> Stuff = {};
+
+        for (auto Index : Scheduler->Threads) {
             if (Index.second.threadIdentity == Identity) {
-                Scheduler->Threads.erase(Index.first);
+                Stuff.push_back(Index.first);
             }
+        }
+
+        for (auto Index : Stuff) {
+            Scheduler->Threads.erase(Index);
         }
     }
 }

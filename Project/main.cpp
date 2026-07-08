@@ -12,7 +12,6 @@ int main()
 
     Scheduler::Start();
 
-
     Graphics::Engine3D::CreateMeshVector("Teapot", ObjParser::DefaultParseObj(Utils::ReadFile("Engine/teapot.obj")));
     Graphics::Engine3D::CreateMeshVector("Arrow", ObjParser::DefaultParseObj(Utils::ReadFile("Engine/arrow.obj")));
 
@@ -46,42 +45,52 @@ int main()
 	auto SceneUI = Services::GetService<UIScene>("UIScene");
     auto InputService = Services::GetService<Input>("Input");
 
-    glGenFramebuffers(1, &Graphics::Engine3D::defaultFBO);
+    if (Studio::Enabled) {
+        glGenFramebuffers(1, &Graphics::Engine3D::defaultFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, Graphics::Engine3D::defaultFBO);
 
-    glGenTextures(1, &Graphics::Engine3D::FBOtextureMap);
-    glBindTexture(GL_TEXTURE_2D, Graphics::Engine3D::FBOtextureMap);
+        glGenTextures(1, &Graphics::Engine3D::FBOtextureMap);
+        glBindTexture(GL_TEXTURE_2D, Graphics::Engine3D::FBOtextureMap);
 
-    glTexStorage2D(
-        GL_TEXTURE_2D,
-        1, // mip levels
-        (GLenum)GL_RGBA,
-        (GLsizei)1024,
-        (GLsizei)1024
-    );
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    //glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    // Framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, Graphics::Engine3D::defaultFBO);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, Graphics::Engine3D::FBOtextureMap, 0);
-
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Graphics::Engine3D::FBOtextureMap, 0);
+    }
 
     while (!Gl.ShouldClose()) {
         i++;
         Utils::FrameRate::Cap();
 
+        Gl.PreRender();
+
+        if (Studio::Enabled) {
+            Gl.w = Studio::SceneWindowSizeX;
+            Gl.h = Studio::SceneWindowSizeY;
+
+            glBindTexture(GL_TEXTURE_2D, Graphics::Engine3D::FBOtextureMap);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Gl.w, Gl.h, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            glViewport(0, 0, Gl.w, Gl.h);
+
+            Gl.MouseX -= Studio::SceneCursorOffsetX;
+            Gl.MouseY -= Studio::SceneCursorOffsetY;
+        }
+        else {
+            Gl.w = Gl.width;
+            Gl.h = Gl.height;
+        }
+
+        Gl.MouseY = Gl.h - Gl.MouseY;
+
         Graphics::Engine3D::Camera::CameraStep();
 
         if (Studio::Running) {
-            Physics::SimulateCubes();
+            //Physics::SimulateCubes();
         }
 
         InputFrameFunction(InputService.get());
@@ -93,19 +102,16 @@ int main()
 			}
 		}
 
-
         Scheduler::SchedulerStep();
-
-        glBindFramebuffer(GL_FRAMEBUFFER, Graphics::Engine3D::defaultFBO);
         
         Graphics::Engine3D::Render();
 
-		if (LastHeight != Gl.height || LastWidth != Gl.width) {
+		if (LastHeight != Gl.h || LastWidth != Gl.w) {
 			UpdateUINextFrame = true;
 			UpdateAllText = true;
 
-            LastHeight = Gl.height;
-            LastWidth = Gl.width;
+            LastHeight = Gl.h;
+            LastWidth = Gl.w;
 		}
 
 		if (UpdateUINextFrame) {

@@ -58,10 +58,10 @@ void UpdateUI() {
 			RenderObj.Size = TextObj->Size;
 
 			if (TextObj->SizeConstraint == TextObject::YY) {
-				RenderObj.Size.x *= ((float)Gl.height / (float)Gl.width);
+				RenderObj.Size.x *= ((float)Gl.h / (float)Gl.w);
 			}
 			else if (TextObj->SizeConstraint == TextObject::XX) {
-				RenderObj.Size.y *= ((float)Gl.width / (float)Gl.height);
+				RenderObj.Size.y *= ((float)Gl.w / (float)Gl.h);
 			}
 
 			Object->AssociatedObject = (int)Graphics::Engine2D::RenderObjects.size();

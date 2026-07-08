@@ -13,8 +13,8 @@ namespace Graphics::Engine3D {
         for (const auto& [key, ObjectList] : RenderObjects) {
             glm::vec3 CameraPos = Camera::Position;
 
-            vector<RenderCubeObject_t>& Visible = FilteredRenderObjects[key];
-            vector<RenderCubeObject_t>& Opaque = FilteredTransparentRenderObjects[key];
+            vector<RenderCubeObject_t>& Visible = FilteredTransparentRenderObjects[key];
+            vector<RenderCubeObject_t>& Opaque = FilteredRenderObjects[key];
 
             Visible.clear();
             Opaque.clear();
@@ -83,6 +83,8 @@ namespace Graphics::Engine3D {
 
         /*3D*/ {
             TC.join();
+
+            glDepthMask(GL_TRUE);
 
             for (const auto& [key, ObjectList] : FilteredRenderObjects) {
                 RenderObjectsOfMesh(Meshes[key], ObjectList);

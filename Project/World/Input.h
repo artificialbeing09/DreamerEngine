@@ -48,10 +48,6 @@ bool RayIntersectCube(glm::vec3 rayOrigin, glm::vec3 rayDirection, RenderCubeObj
     return tnearfar.x <= tnearfar.y && tnearfar.y >= 0.0f;
 }
 
-double LastMouseX = 0.0;
-double LastMouseY = 0.0;
-
-
 class Input : public Instance {
 protected:
 public:
@@ -70,29 +66,19 @@ public:
     void SetMouseTarget(shared_ptr<Instance> target) { }
 
     double GetMouseX() {
-        return LastMouseX;
+        return Gl.MouseX;
     }
 
     double GetMouseY() {
-        return LastMouseY;
+        return Gl.MouseY;
     }
 
     void SetMouseX(double X) { 
-        double xpos, ypos;
-        glfwGetCursorPos(Gl.window, &xpos, &ypos);
-
-        LastMouseX = X;
-
-        glfwSetCursorPos(Gl.window, X, ypos);
+        Gl.SetMousePos(X, Gl.MouseY);
     }
 
     void SetMouseY(double Y) {
-        double xpos, ypos;
-        glfwGetCursorPos(Gl.window, &xpos, &ypos);
-
-        LastMouseY = Y;
-
-        glfwSetCursorPos(Gl.window, xpos, Y);
+        Gl.SetMousePos(Gl.MouseX, Y);
     }
 
     int CastRayAllParts(lua_State* L) {
@@ -274,11 +260,8 @@ std::string KeyToText(int key, int scancode) { // ChatGPT provided this code.
 void InputFrameFunction(Input* InputService) {
     static bool KeysDown[400];
 
-    double xpos, ypos;
-    glfwGetCursorPos(Gl.window, &xpos, &ypos);
-
-    double x = ((2.0 * xpos) / (double)Gl.width) - 1.0;
-    double y = 1.0 - ((2.0 * ypos) / (double)Gl.height);
+    double x = ((2.0 * Gl.MouseX) / (double)Gl.w) - 1.0;
+    double y = 1.0 - ((2.0 * Gl.MouseY) / (double)Gl.h);
     double z = 1.0;
     glm::vec3 ray_nds = glm::vec3(x, y, z);
     glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
@@ -344,12 +327,15 @@ void InputFrameFunction(Input* InputService) {
 		WindowLastFocused = WindowFocused;
 	}
 
-    if (LastMouseX != xpos && LastMouseY != ypos) {
-        Scheduler::Event::FireListenerInstance(InputService, "MouseMoved", { GetEventParamFromT(xpos - LastMouseX), GetEventParamFromT(ypos - LastMouseY) });
+    static double LastMouseX = 0.0;
+    static double LastMouseY = 0.0;
+
+    if (LastMouseX != Gl.MouseX && LastMouseY != Gl.MouseY) {
+        Scheduler::Event::FireListenerInstance(InputService, "MouseMoved", { GetEventParamFromT(Gl.MouseX - LastMouseX), GetEventParamFromT(Gl.MouseY - LastMouseY) });
     }
 
-    LastMouseX = xpos;
-    LastMouseY = ypos;
+    LastMouseX = Gl.MouseX;
+    LastMouseY = Gl.MouseY;
 }
 
 auto eventInputInputPressed = CreateLuaEventDescriptor(Input, "Input", "InputPressed", Input::InputDown);

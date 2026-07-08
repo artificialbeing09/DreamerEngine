@@ -113,8 +113,6 @@ namespace Graphics::Engine2D {
     void PreRender() {
         Shape2DShader.use();
 
-        Gl.PreRender();
-
         Gl.Disable(Gl.DepthTest);
         Gl.Disable(Gl.CullFace);
 
@@ -125,7 +123,7 @@ namespace Graphics::Engine2D {
     void RenderObjectsOfType(vector<Render2DObject_t> Objects) {
         PreRender();
 
-        Shape2DShader.setFloat("ratio", ((float)Gl.height / (float)Gl.width));
+        Shape2DShader.setFloat("ratio", ((float)Gl.h / (float)Gl.w));
 
         Gl.BindShaderStorageBuffer(Shape2DSSBO);
         Gl.ShaderStorageBufferDataVector(Objects);
@@ -187,10 +185,10 @@ namespace Graphics::Engine2D {
         glm::vec2 Position = TxPosition;
 
         if (Align == Center) {
-            Position.x -= (Width / 2.0f) * ((float)Gl.height / (float)Gl.width);
+            Position.x -= (Width / 2.0f) * ((float)Gl.h / (float)Gl.w);
         }
         else if (Align == Right) {
-            Position.x -= Width * ((float)Gl.height / (float)Gl.width);
+            Position.x -= Width * ((float)Gl.h / (float)Gl.w);
         }
 
         glm::vec4 TextColor = glm::vec4(Color, Transparency);
@@ -224,11 +222,11 @@ namespace Graphics::Engine2D {
                 (-(CharacterScale * (RenderY / 128.0)))
             };
 
-            CharacterPosition.x *= ((float)Gl.height / (float)Gl.width);
+            CharacterPosition.x *= ((float)Gl.h / (float)Gl.w);
 
             TextObjects.push_back({
                 (CharacterPosition) + Position,
-                {CharacterScale * ((float)Gl.height / (float)Gl.width), CharacterScale},
+                {CharacterScale * ((float)Gl.h / (float)Gl.w), CharacterScale},
                 TextColor,
                 Texture
                 });

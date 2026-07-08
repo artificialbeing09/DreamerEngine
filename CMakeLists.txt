@@ -13,11 +13,11 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project ("Concise")
+project ("DreamerEngine")
 
 set_source_files_properties("Project/main.cpp" PROPERTIES COMPILE_OPTIONS "/bigobj")
 
-add_executable(Concise Project/main.cpp)
+add_executable(DreamerEngine Project/main.cpp)
 
 file(GLOB LUA_SOURCES
     Lib/Lua/*.c
@@ -27,15 +27,15 @@ file(GLOB IMGUI_SOURCES
     Lib/imgui/*.cpp
 )
 
-target_include_directories(Concise
+target_include_directories(DreamerEngine
     PRIVATE Project
     PRIVATE Lib
 )
 
 add_library(Lua STATIC ${LUA_SOURCES})
 add_library(ImGUI STATIC ${IMGUI_SOURCES})
-target_link_libraries(Concise PRIVATE Lua)
-target_link_libraries(Concise PRIVATE ImGUI)
+target_link_libraries(DreamerEngine PRIVATE Lua)
+target_link_libraries(DreamerEngine PRIVATE ImGUI)
 
 target_include_directories(ImGUI
     PRIVATE Lib
@@ -47,7 +47,7 @@ if (UNIX)
     find_package(glfw3 REQUIRED)
     find_package(OpenGL REQUIRED)
 
-    target_link_libraries(Concise
+    target_link_libraries(DreamerEngine
         PRIVATE GLEW
         PRIVATE glfw
         PRIVATE OpenGL::GL
@@ -55,15 +55,15 @@ if (UNIX)
 endif(UNIX)
 
 if (WIN32)
-    target_link_libraries(Concise
+    target_link_libraries(DreamerEngine
         PRIVATE ${CMAKE_SOURCE_DIR}/Lib/glfw3.lib
         PRIVATE ${CMAKE_SOURCE_DIR}/Lib/glew32s.lib
     )
 endif(WIN32)
 
 add_custom_command(
-    TARGET Concise POST_BUILD
+    TARGET DreamerEngine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/Engine
-        $<TARGET_FILE_DIR:Concise>/Engine
+        $<TARGET_FILE_DIR:DreamerEngine>/Engine
 )

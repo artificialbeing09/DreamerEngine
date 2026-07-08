@@ -36,7 +36,8 @@ private:
 public:
     GLFWwindow* window;
 
-    int width, height;
+    int width, height; // true width/height
+    int w, h; // stored width/height
 
     static inline bool KeysDown[400]; // Also used for mouse input
 
@@ -72,14 +73,28 @@ public:
         keyCallback = newFunc;
     }
 
+    double MouseX, MouseY;
+
     void PreRender() {
         glfwMakeContextCurrent(window);
         glfwGetFramebufferSize(window, &width, &height);
         glViewport(0, 0, width, height);
+        glfwGetCursorPos(window, &MouseX, &MouseY);
+
+        glClearColor(0.0, 0.5, 1.0, 1.0);
+
+        ClearDepthBuffer();
+        ClearColorBuffer();
     }
 
     bool ShouldClose() {
         return glfwWindowShouldClose(window);
+    }
+
+    void SetMousePos(double NewMouseX, double NewMouseY) {
+        MouseX = NewMouseX;
+        MouseY = NewMouseY;
+        glfwSetCursorPos(window, NewMouseX, NewMouseY);
     }
 
     // Type types
@@ -192,20 +207,11 @@ public:
         glDisable(a);
     }
 
-    glm::vec3 DirectionFromEuler(float x, float y, float z) {
+    glm::mat4 DirectionFromEuler(float x, float y, float z) {
         return
             glm::rotate(glm::mat4(1.0f), z, glm::vec3(0.0f, 0.0f, 1.0f)) *
             glm::rotate(glm::mat4(1.0f), y, glm::vec3(0.0f, 1.0f, 0.0f)) *
-            glm::rotate(glm::mat4(1.0f), x, glm::vec3(1.0f, 0.0f, 0.0f)) *
-            glm::vec4(0.0f, 0.0f, -1.0f, 0.0f);
-    }
-
-    glm::mat4 CalculateView(glm::vec3 pos, glm::vec3 rot) {
-        return glm::lookAt(pos, pos + DirectionFromEuler(rot.x, rot.y, rot.z), glm::vec3(0.0f, 1.0f, 0.0f));
-    }
-
-    glm::mat4 CalculateProjection(float farf = 100.0f, float fovy = glm::radians(45.0f), float close = 0.1f) {
-        return glm::perspective(fovy, (float)width / (float)height, close, farf);
+            glm::rotate(glm::mat4(1.0f), x, glm::vec3(1.0f, 0.0f, 0.0f));
     }
 
     void PostRender() {

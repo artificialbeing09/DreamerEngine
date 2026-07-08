@@ -170,12 +170,6 @@ namespace Graphics::Engine3D {
     void PreRender() {
         StandardObjectShader.use();
 
-        glClearColor(0.0, 0.5, 1.0, 1.0);
-
-        Gl.PreRender();
-        Gl.ClearDepthBuffer();
-        Gl.ClearColorBuffer();
-
         Gl.Enable(Gl.DepthTest);
         Gl.Enable(Gl.CullFace);
 

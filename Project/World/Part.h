@@ -33,7 +33,7 @@ public:
 	inline LuaVector GetRotation() { return StoredRotation; }
 
 	inline void SetRotation(LuaVector NewRotation) { 
-		Primitive->Rotation = RotationX(NewRotation.x) * RotationY(NewRotation.y) * RotationZ(NewRotation.z);
+		Primitive->Rotation = Gl.DirectionFromEuler(NewRotation.x, NewRotation.y, NewRotation.z);//RotationX(NewRotation.x)* RotationY(NewRotation.y)* RotationZ(NewRotation.z);
 		StoredRotation = NewRotation;
 	}
 
