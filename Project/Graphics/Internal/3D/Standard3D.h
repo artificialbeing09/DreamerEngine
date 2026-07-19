@@ -21,6 +21,7 @@ struct RenderCubeObject_t {
     float Transparency = 0.0;
     float SizeLength = 2;
     float CameraDist = 2; // Calculated every render cycle
+    float Pad = 0.0;
 };
 
 struct PhysicsExtraInformation_t {

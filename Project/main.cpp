@@ -12,6 +12,12 @@ int main()
 
     Scheduler::Start();
 
+    // TODO: Make it so that it's easy to add new meshes/fonts
+    // 
+    // TODO: Fix performance issues with ray casting
+    //  - also add a system that brings objects to gpu without a need
+    // TODO: Fix the skybox being upside down (and probably all textures on cubes being messed up)
+
     Graphics::Engine3D::CreateMeshVector("Teapot", ObjParser::DefaultParseObj(Utils::ReadFile("Engine/teapot.obj")));
     Graphics::Engine3D::CreateMeshVector("Arrow", ObjParser::DefaultParseObj(Utils::ReadFile("Engine/arrow.obj")));
 
@@ -93,7 +99,7 @@ int main()
             //Physics::SimulateCubes();
         }
 
-        InputFrameFunction(InputService.get());
+        //InputFrameFunction(InputService.get());
         PreTextObjectFunction();
 
 		for (auto o : SceneUI->GetDescendants()) {

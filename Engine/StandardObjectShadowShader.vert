@@ -17,6 +17,7 @@ struct cubeObjectType {
 	float transparency;
 	float storage1;
 	float storage2;
+	float pad;
 };
 
 layout(std430, binding = 5) buffer InstanceData {
