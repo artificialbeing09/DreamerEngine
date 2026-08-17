@@ -215,6 +215,11 @@ namespace InstanceBridge {
 
 				lua_pushvector(L, *Value);
 			}
+			else if (Descriptor->Type == PropertyLuaTypes::L_CFrame) {
+				LuaCoordinateFrame* Value = (LuaCoordinateFrame*)Descriptor->GetFunction(Object);
+
+				lua_pushcoordinateframe(L, *Value);
+			}
 			else if (Descriptor->Type == PropertyLuaTypes::L_Boolean) {
 				bool* Value = (bool*)Descriptor->GetFunction(Object);
 
@@ -244,6 +249,11 @@ namespace InstanceBridge {
 			}
 			else if (Descriptor->Type == PropertyLuaTypes::L_Vector) {
 				LuaVector Value = luaL_checkvector(L, 3);
+
+				Descriptor->SetFunction(Object, &Value);
+			}
+			else if (Descriptor->Type == PropertyLuaTypes::L_CFrame) {
+				LuaCoordinateFrame Value = luaL_checkcoordinateframe(L, 3);
 
 				Descriptor->SetFunction(Object, &Value);
 			}

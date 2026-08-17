@@ -246,7 +246,8 @@ enum PropertyLuaTypes {
 	L_Number,
 	L_Int,
 	L_Boolean,
-	L_Vector // Later make into standard just "Vector".
+	L_Vector,
+	L_CFrame
 };
 
 struct PropertyDescriptor {

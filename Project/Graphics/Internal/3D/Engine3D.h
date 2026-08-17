@@ -19,6 +19,8 @@ namespace Graphics::Engine3D {
             Visible.clear();
             Opaque.clear();
 
+            auto ReservedCapacity = (ObjectList.size() & ~0xFF) | 0xFF;
+
             if (Visible.max_size() < ObjectList.size())
                 Visible.reserve(ObjectList.size());
 
@@ -69,6 +71,7 @@ namespace Graphics::Engine3D {
             RenderCubeObject_t Skybox;
             
             Skybox.Position = Camera::Position;
+            Skybox.Rotation = Gl.DirectionFromEuler(3.14, 0, 0);
             Skybox.Texture0 = Texture[0];
             Skybox.Texture1 = Texture[1];
             Skybox.Size = glm::vec3(-100.0, -100.0, -100.0);
@@ -85,6 +88,7 @@ namespace Graphics::Engine3D {
             TC.join();
 
             glDepthMask(GL_TRUE);
+            glDepthFunc(GL_LESS);
 
             for (const auto& [key, ObjectList] : FilteredRenderObjects) {
                 RenderObjectsOfMesh(Meshes[key], ObjectList);

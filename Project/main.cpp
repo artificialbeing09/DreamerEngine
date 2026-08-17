@@ -12,21 +12,40 @@ int main()
 
     Scheduler::Start();
 
-    // TODO: Make it so that it's easy to add new meshes/fonts
-    // 
+    // TODOs starting from top to bottom of immediate importance.
+
+    // Bug/performance
+
     // TODO: Fix performance issues with ray casting
-    //  - also add a system that brings objects to gpu without a need
-    // TODO: Fix the skybox being upside down (and probably all textures on cubes being messed up)
+    // TODO: Add a system that stores objects permanently on the GPU and only change when object is changed (save memory transfer slowness)
+    //       -  render re-ordering be completely on the GPU because of the way objects are stored currently (compute shader)
+    //       -  a system to detect changes in the object primitive (add a call back maybe)
+    //       -  have the object data buffer be seperated through the objects with no changes in a set amount of time vs with
+    //       -  have it be specifically and non-memory efficiently garbage collected so that cpu/gpu time is the least with it
+    
+    // Features
 
-    Graphics::Engine3D::CreateMeshVector("Teapot", ObjParser::DefaultParseObj(Utils::ReadFile("Engine/teapot.obj")));
-    Graphics::Engine3D::CreateMeshVector("Arrow", ObjParser::DefaultParseObj(Utils::ReadFile("Engine/arrow.obj")));
+    // TODO: Test CFrames
+    // TODO: Add selectionboxes and particles
+    // TODO: Add move, rotate, scale, part insert plugins
+    // TODO: Voxel terrain
+    // TODO: Working (optimized) physics
+    // TODO: GUI on a surface or mid air facing camera
+    // TODO: http/websocket library
+    
+    // After-works
 
-    Texture::GenerateEngineTextures();
+    // TODO: Make a simple game to demonstrate the capabilities.
+
+    // Future
+
+    // TODO: Add rigs/character bodies
+    // TODO: Re-structure the codebase so that it's easier to add features/scalable and more readable
+    //       (mainly for graphics and non-instance stuff, instances are good)
+
+    Graphics::ImportEngineObjects();
 
     Services::CreateServices();
-
-    Graphics::Engine2D::CreateFont("Default", Utils::ReadFile("Engine/Default.ttf"));
-	Graphics::Engine2D::CreateFont("HyperFont", Utils::ReadFile("Engine/ttf_HyperFont.ttf"));
 
     if (GetConsoleWindow()) {
         Test::Start();
@@ -51,20 +70,6 @@ int main()
 	auto SceneUI = Services::GetService<UIScene>("UIScene");
     auto InputService = Services::GetService<Input>("Input");
 
-    if (Studio::Enabled) {
-        glGenFramebuffers(1, &Graphics::Engine3D::defaultFBO);
-        glBindFramebuffer(GL_FRAMEBUFFER, Graphics::Engine3D::defaultFBO);
-
-        glGenTextures(1, &Graphics::Engine3D::FBOtextureMap);
-        glBindTexture(GL_TEXTURE_2D, Graphics::Engine3D::FBOtextureMap);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Graphics::Engine3D::FBOtextureMap, 0);
-    }
-
     while (!Gl.ShouldClose()) {
         i++;
         Utils::FrameRate::Cap();
@@ -72,19 +77,7 @@ int main()
         Gl.PreRender();
 
         if (Studio::Enabled) {
-            Gl.w = Studio::SceneWindowSizeX;
-            Gl.h = Studio::SceneWindowSizeY;
-
-            glBindTexture(GL_TEXTURE_2D, Graphics::Engine3D::FBOtextureMap);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Gl.w, Gl.h, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-            glViewport(0, 0, Gl.w, Gl.h);
-
-            Gl.MouseX -= Studio::SceneCursorOffsetX;
-            Gl.MouseY -= Studio::SceneCursorOffsetY;
+            Studio::RefreshFrame();
         }
         else {
             Gl.w = Gl.width;

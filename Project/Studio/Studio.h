@@ -54,6 +54,53 @@ namespace Studio {
     bool PropertyInstanceAdorneeEnabled = false;
     PropertyDescriptor* DescriptorForAdornee = NULL;
 
+    int SceneWindowSizeX = 0;
+    int SceneWindowSizeY = 0;
+
+    int SceneCursorOffsetX = 0;
+    int SceneCursorOffsetY = 0;
+
+    GLuint FBODepth;
+
+    void InitializeSeperateFrameBuffer() {
+        glGenFramebuffers(1, &Graphics::Engine3D::defaultFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, Graphics::Engine3D::defaultFBO);
+
+        glGenTextures(1, &Graphics::Engine3D::FBOtextureMap);
+        glBindTexture(GL_TEXTURE_2D, Graphics::Engine3D::FBOtextureMap);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Graphics::Engine3D::FBOtextureMap, 0);
+
+        glGenRenderbuffers(1, &FBODepth);
+        glBindRenderbuffer(GL_RENDERBUFFER, FBODepth);
+
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 1024, 1024);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, FBODepth);
+    }
+
+    void RefreshFrame() {
+        Gl.w = Studio::SceneWindowSizeX;
+        Gl.h = Studio::SceneWindowSizeY;
+
+        glBindRenderbuffer(GL_RENDERBUFFER, FBODepth);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, Gl.w, Gl.h);
+
+        glBindTexture(GL_TEXTURE_2D, Graphics::Engine3D::FBOtextureMap);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Gl.w, Gl.h, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glViewport(0, 0, Gl.w, Gl.h);
+
+        Gl.MouseX -= Studio::SceneCursorOffsetX;
+        Gl.MouseY -= Studio::SceneCursorOffsetY;
+    }
+
     void RenderDescendants(shared_ptr<Instance> Start, int LeftOffset);
 
     void RenderDescendants(shared_ptr<Instance> Start, int LeftOffset) {
@@ -256,6 +303,8 @@ namespace Studio {
     bool Running = false;
 
     void Run() {
+        Scheduler::Event::FireListenerInstance(Services::GetService<Scene>("Scene").get(), "StudioGameModified");
+
         Scheduler::Lua::RunScript(LoadAndSave::GetScriptByModuleName("main.lua", 0), "main.lua", 0);
         Running = true;
     }
@@ -268,12 +317,6 @@ namespace Studio {
     int Counter = 0;
 
     char* PropertyValueBuf[256];
-
-    int SceneWindowSizeX = 0;
-    int SceneWindowSizeY = 0;
-
-    int SceneCursorOffsetX = 0;
-    int SceneCursorOffsetY = 0;
 
     void GUIRender() {
         if (BarInfoEnabled) {
@@ -580,6 +623,8 @@ namespace Studio {
                     CurrentMapSelected = f.result();
                 }
 
+                Scheduler::Event::FireListenerInstance(Services::GetService<Scene>("Scene").get(), "StudioGameModified");
+
                 string Serialized = Serializer::Serialize(GetGameWorld());
 
                 Utils::WriteFile(CurrentMapSelected.c_str(), Serialized.c_str());
@@ -592,6 +637,8 @@ namespace Studio {
                     pfd::opt::force_overwrite);
 
                 CurrentMapSelected = f.result();
+
+                Scheduler::Event::FireListenerInstance(Services::GetService<Scene>("Scene").get(), "StudioGameModified");
                 
                 string Serialized = Serializer::Serialize(GetGameWorld());
 
@@ -625,6 +672,8 @@ namespace Studio {
     int InitGUIWindow(GLFWwindow* customWindow = NULL) {
         if (!Enabled)
             return 0;
+
+        InitializeSeperateFrameBuffer();
 
         main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor()); // Valid on GLFW 3.3+ only
         window = customWindow;

@@ -218,6 +218,31 @@ LuaCoordinateFrame luaL_checkcoordinateframe(lua_State* L, int index) {
 }
 
 namespace CoordinateFrame {
+    static int lookAt(lua_State* L) {
+        LuaVector camera = luaL_checkvector(L, 1);
+        LuaVector target = luaL_checkvector(L, 2);
+
+        glm::vec3 forward = glm::normalize(glm::vec3(target.x, target.y, target.z) - glm::vec3(camera.x, camera.y, camera.z));
+        glm::vec3 worldUp = glm::vec3(0, 1, 0); // idt i need to make this a parameter
+
+        glm::vec3 right = glm::normalize(glm::cross(forward, worldUp));
+        glm::vec3 up = glm::cross(right, forward);
+
+        glm::mat4 rotation(1.0f);
+
+        rotation[0] = glm::vec4(right, 0.0f);
+        rotation[1] = glm::vec4(up, 0.0f);
+        rotation[2] = glm::vec4(-forward, 0.0f);
+
+        LuaCoordinateFrame NewObj;
+        NewObj.Position = glm::vec3(camera.x, camera.y, camera.z);
+        NewObj.Rotation = rotation;
+
+        lua_pushcoordinateframe(L, NewObj);
+
+        return 1;
+    }
+
     static int l_Vector_new(lua_State* L) {
         LuaCoordinateFrame Created;
 
@@ -248,8 +273,69 @@ namespace CoordinateFrame {
         else if (lkey == "z") {
             lua_pushnumber(L, obj.Position.z);
         }
+        else if (lkey == "position" || lkey == "pos") {
+            lua_pushvector(L, LuaVector(obj.Position.x, obj.Position.y, obj.Position.z));
+        }
+        else if (lkey == "rotation") {
+            LuaCoordinateFrame newt = obj;
+            newt.Position = glm::vec3(0.0f, 0.0f, 0.0f);
+
+            lua_pushcoordinateframe(L, newt);
+        }
+        else if (lkey == "rightvector" || lkey == "right" || lkey == "xvector") {
+            glm::vec3 up = glm::vec3(obj.Rotation[0]);
+
+            lua_pushvector(L, LuaVector(up.x, up.y, up.z));
+        }
+        else if (lkey == "upvector" || lkey == "up" || lkey == "yvector") {
+            glm::vec3 up = glm::vec3(obj.Rotation[1]);
+
+            lua_pushvector(L, LuaVector(up.x, up.y, up.z));
+        }
+        else if (lkey == "frontvector" || lkey == "front" || lkey == "zvector") {
+            glm::vec3 up = glm::vec3(obj.Rotation[2]);
+
+            lua_pushvector(L, LuaVector(up.x, up.y, up.z));
+        }
+        else if (lkey == "inverse") {
+            obj.Position = -obj.Position;
+            obj.Rotation = glm::inverse(obj.Rotation);
+
+            lua_pushcoordinateframe(L, obj);
+        }
+        else if (lkey == "toworldspace") {
+            lua_pushcfunction(L, [](lua_State* L) {
+                LuaCoordinateFrame obj = luaL_checkcoordinateframe(L, 2);
+                LuaCoordinateFrame obj2 = luaL_checkcoordinateframe(L, 3);
+
+                obj.Position += obj2.Position;
+                obj.Rotation *= obj2.Rotation;
+
+                lua_pushcoordinateframe(L, obj);
+
+                return 1;
+                });
+        }
+        else if (lkey == "toobjectspace") {
+            lua_pushcfunction(L, [](lua_State* L) {
+                LuaCoordinateFrame obj = luaL_checkcoordinateframe(L, 2);
+                LuaCoordinateFrame obj2 = luaL_checkcoordinateframe(L, 3);
+
+                obj.Position -= obj2.Position;
+                obj.Rotation *= glm::inverse(obj2.Rotation);
+
+                lua_pushcoordinateframe(L, obj);
+
+                return 1;
+                });
+        }
+        else if (lkey == "toangles" || lkey == "toeulerangles" || lkey == "angles") {
+            auto euler = glm::eulerAngles(glm::quat_cast(obj.Rotation));
+
+            lua_pushvector(L, LuaVector(euler.x, euler.y, euler.z));
+        }
         else {
-            lua_pushnil(L);
+            return luaL_error(L, "Invalid property of CoordinateFrame");
         }
 
         return 1;
@@ -363,7 +449,22 @@ namespace CoordinateFrame {
         return 1;
     }
 
+    static const luaL_Reg cframelib[] = {
+        {"new",   l_Vector_new},
+        {"lookAt",   lookAt},
+        {NULL, NULL}
+    };
+
+    int realopen_cframe(lua_State* L) {
+        luaL_newlib(L, cframelib);
+
+        return 1;
+    }
+
     int luaopen_vector(lua_State* L) {
+        luaL_requiref(L, "CFrame", realopen_cframe, 1);
+        lua_pop(L, 1);
+
         luaL_newmetatable(L, "CoordinateFrame");
 
         lua_pushstring(L, "__index");
@@ -400,9 +501,6 @@ namespace CoordinateFrame {
 
         lua_pop(L, 1);
 
-        lua_register(L, "CoordinateFrame", l_Vector_new);
-        lua_register(L, "CFrame", l_Vector_new);
-        
         return 1;
     }
 }

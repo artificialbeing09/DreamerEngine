@@ -30,11 +30,21 @@ public:
 
 	inline void SetPosition(LuaVector NewPosition) { Primitive->Position = glm::vec3(NewPosition.x, NewPosition.y, NewPosition.z); }
 
-	inline LuaVector GetRotation() { return StoredRotation; }
+	inline LuaCoordinateFrame GetCFrame() { return LuaCoordinateFrame(Primitive->Position, Primitive->Rotation); }
+
+	inline void SetCFrame(LuaCoordinateFrame NewPosition) { 
+		Primitive->Position = NewPosition.Position;
+		Primitive->Rotation = NewPosition.Rotation;
+	}
+
+	inline LuaVector GetRotation() { 
+		auto euler = glm::eulerAngles(glm::quat_cast(Primitive->Rotation));
+
+		return LuaVector(glm::degrees(euler.x), glm::degrees(euler.y), glm::degrees(euler.z));
+	}
 
 	inline void SetRotation(LuaVector NewRotation) { 
-		Primitive->Rotation = Gl.DirectionFromEuler(NewRotation.x, NewRotation.y, NewRotation.z);//RotationX(NewRotation.x)* RotationY(NewRotation.y)* RotationZ(NewRotation.z);
-		StoredRotation = NewRotation;
+		Primitive->Rotation = Gl.DirectionFromEuler(glm::radians(NewRotation.x), glm::radians(NewRotation.y), glm::radians(NewRotation.z));
 	}
 
 	inline LuaVector GetSize() { return LuaVector(Primitive->Size.x, Primitive->Size.y, Primitive->Size.z); }
@@ -232,6 +242,7 @@ public:
 };
 
 auto propPartPosition = CreatePropertyDescriptor(Part, "Part", "Position", LuaVector, L_Vector, &Part::SetPosition, &Part::GetPosition);
+auto propPartCFrame = CreatePropertyDescriptor(Part, "Part", "CFrame", LuaCoordinateFrame, L_CFrame, &Part::SetCFrame, &Part::GetCFrame);
 auto propPartRotation = CreatePropertyDescriptor(Part, "Part", "Rotation", LuaVector, L_Vector, &Part::SetRotation, &Part::GetRotation);
 auto propPartAnchored = CreatePropertyDescriptor(Part, "Part", "Anchored", bool, L_Boolean, &Part::SetAnchored, &Part::GetAnchored);
 auto propPartVelocity = CreatePropertyDescriptor(Part, "Part", "Velocity", LuaVector, L_Vector, &Part::SetVelocity, &Part::GetVelocity);
