@@ -41,7 +41,7 @@ protected: // Standard: don't use private for any classes
 
 	weak_ptr<Instance> Parent;
 
-	deque<shared_ptr<Instance>> Children = { }; // TODO: make this thread safe (if it isn't already)
+	deque<shared_ptr<Instance>> Children = { };
 public:
 	int ParentChildrenIndex = 0;
 

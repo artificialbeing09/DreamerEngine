@@ -23,25 +23,39 @@ int main()
     //       -  have the object data buffer be seperated through the objects with no changes in a set amount of time vs with
     //       -  have it be specifically and non-memory efficiently garbage collected so that cpu/gpu time is the least with it
     
+    // Minor bugs
+
+    // TODO: Weird studio ui locations every time it's opened
+    // TODO: Studio GUI objects not having the correct mouse cursor position
+    // TODO: Skybox orientation may be incorrect
+    
     // Features
 
     // TODO: Test CFrames
     // TODO: Add selectionboxes and particles
     // TODO: Add move, rotate, scale, part insert plugins
+    // TODO: Actually improve lights
+    //       -  spot light is a circle, add point lights and diff shaped lights
+    // TODO: Working (optimized) physics (fuck nah)
+    // TODO: GUI on a surface
+    //       -  options for facing certain directions (at camera, etc) (like billboard gui)
     // TODO: Voxel terrain
-    // TODO: Working (optimized) physics
-    // TODO: GUI on a surface or mid air facing camera
+    //       -  add smooth terrain and minecraft-like terrain with blocks
+    //       -  ofc physics interacts with it
     // TODO: http/websocket library
+    //       -  add http requests first
+    //       -  then sockets
+    //       -  then https (god no)
+    // TODO: Add rigs/character bodies and animations
+    // TODO: Softbody physics (hell nah)
+    // TODO: Re-structure the codebase so that it's easier to add features/scalable and more readable
+    //       (mainly for graphics and non-instance stuff, instances are good)
+    // TODO: Add sandboxed Lua instancing (already kind of exists on its own but, just make it standardized ig)
     
     // After-works
 
     // TODO: Make a simple game to demonstrate the capabilities.
-
-    // Future
-
-    // TODO: Add rigs/character bodies
-    // TODO: Re-structure the codebase so that it's easier to add features/scalable and more readable
-    //       (mainly for graphics and non-instance stuff, instances are good)
+    // TODO: Add documentation
 
     Graphics::ImportEngineObjects();
 

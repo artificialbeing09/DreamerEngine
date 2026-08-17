@@ -193,10 +193,6 @@ namespace Vector {
     }
 }
 
-// TODO: world and object space math
-// up, frfont, right vectors
-// looking
-
 struct LuaCoordinateFrame {
     glm::vec3 Position = glm::vec3(0.0, 0.0, 0.0);
     glm::mat4 Rotation = glm::mat4(1.0f);
@@ -449,9 +445,24 @@ namespace CoordinateFrame {
         return 1;
     }
 
+    static int fromAngles(lua_State* L) {
+        double X = lua_tonumber(L, 1);
+        double Y = lua_tonumber(L, 2);
+        double Z = lua_tonumber(L, 3);
+
+        LuaCoordinateFrame obj;
+        obj.Position = glm::vec3(0.0, 0.0, 0.0);
+        obj.Rotation = Gl.DirectionFromEuler(X, Y, Z);
+
+        lua_pushcoordinateframe(L, obj);
+
+        return 1;
+    }
+
     static const luaL_Reg cframelib[] = {
         {"new",   l_Vector_new},
         {"lookAt",   lookAt},
+        {"fromAngles",   fromAngles},
         {NULL, NULL}
     };
 
