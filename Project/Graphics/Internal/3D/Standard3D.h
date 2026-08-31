@@ -57,6 +57,19 @@ struct RenderLightObject_t {
     glm::vec3 Color = glm::vec3(1.0f, 1.0f, 1.0f);
 };
 
+struct ParticleObject_t {
+    glm::vec3 Position = glm::vec3(0.0);
+    uint32_t Texture = 0;
+    glm::vec4 Color = glm::vec4(0.0);
+    glm::vec3 Velocity = glm::vec3(0.0);
+    float TimeStart = 0.0;
+    glm::vec3 Acceleration = glm::vec3(0.0);
+    float TimeEnd = 10000000000.0;
+    float Lifetime = 0.0;
+    float RateOffset = 0.0;
+    void* Storage; // Used for cataloguing
+};
+
 struct RenderObjectStore_t {
     void* Storage;
     PhysicsExtraInformation_t Physics;
@@ -123,10 +136,23 @@ vector<float> CubeInterleaved = {
     1, 0, 1,    0, 0, 1,   1, 0,
 };
 
+vector<float> ParticleInterleaved = {
+    0, 1,  0, 1,
+    1, 0,  1, 0,
+    1, 1,  1, 1,
+
+    0, 1,  0, 1,
+    0, 0,  0, 0,
+    1, 0,  1, 0,
+};
+
 namespace Graphics::Engine3D {
     Shader StandardObjectShader(NULL, NULL);
     Shader ShadowShader(NULL, NULL);
+    Shader ParticleShader(NULL, NULL);
+
     GLuint StandardObjectSSBO;
+    GLuint ParticleSSBO;
 
     struct StandardObjectMesh {
         GLuint GLBuffer;
@@ -191,6 +217,7 @@ namespace Graphics::Engine3D {
 
     map<string, deque<RenderObjectStore_t>> RenderObjects;
     deque<LightObjectStore_t> Lights = {  }; //{glm::vec3(12.0f, 40.0f, 12.0f)}, {}
+    deque<ParticleObject_t> Particles = { };
     RenderLightObject_t RenderLights[20];
 
     unsigned int defaultFBO = 0;
@@ -317,6 +344,32 @@ namespace Graphics::Engine3D {
         glDrawArraysInstanced(Gl.Triangles, 0, (GLsizei)Mesh.VertexCount, (GLsizei)Objects.size());
     }
 
+    GLuint ParticleMeshBuffer;
+
+    void RenderParticles(vector<ParticleObject_t> Objects) {
+        if (Objects.size() <= 0) {
+            return;
+        }
+
+        glm::mat4 VP = Camera::CalculateProjection() * Camera::CalculateView();
+
+        ParticleShader.use();
+        ParticleShader.setMat4("projection", VP);
+        ParticleShader.setMat4("rotation", Camera::CalculateRotation());
+        ParticleShader.setFloat("currentTime", Utils::GetSecondsSinceStart());
+
+        Gl.BindShaderStorageBuffer(ParticleSSBO);
+        Gl.ShaderStorageBufferDataVector(Objects);
+        Gl.BindShaderStorageBufferBase(ParticleSSBO, 5); // Binding = 5 must match GLSL
+
+        Gl.BindArrayBuffer(ParticleMeshBuffer);
+        Gl.VertexArray(0, 4, Gl.Float, false, 4 * sizeof(float), NULL);
+
+        Gl.BindVertexArray(1);
+
+        glDrawArraysInstanced(Gl.Triangles, 0, (GLsizei)6, (GLsizei)Objects.size());
+    }
+
     void initShadowMap() {
         glGenFramebuffers(1, &depthFBO);
 
@@ -358,6 +411,10 @@ namespace Graphics::Engine3D {
         StandardObjectShader = Shader(Utils::ReadFile("Engine/StandardObjectShader.vert"), Utils::ReadFile("Engine/StandardObjectShader.frag"), false);
         StandardObjectShader.use();
 
+        ParticleShader = Shader(Utils::ReadFile("Engine/ParticleShader.vert"), Utils::ReadFile("Engine/ParticleShader.frag"), false);
+        ParticleShader.use();
+
+        ParticleSSBO = Gl.GenBuffer();
         StandardObjectSSBO = Gl.GenBuffer();
 
         initShadowMap();
@@ -371,5 +428,9 @@ namespace Graphics::Engine3D {
         }
 
         glUniform1iv(StandardObjectShader.uniformLocation("Textures"), 24, samplers);
+
+        ParticleMeshBuffer = Gl.GenBuffer();
+        Gl.BindArrayBuffer(ParticleMeshBuffer);
+        Gl.BufferStaticArrayData(ParticleInterleaved.data(), ParticleInterleaved.size() * sizeof(float));
     }
 }

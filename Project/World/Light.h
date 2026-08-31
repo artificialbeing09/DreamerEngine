@@ -26,6 +26,13 @@ public:
 		Primitive->Direction = Graphics::Engine3D::Camera::DirectionFromEuler(NewRotation.x, NewRotation.y, NewRotation.z);
 	}
 
+	inline LuaCoordinateFrame GetCFrame() { return LuaCoordinateFrame(Primitive->Position, Gl.DirectionFromEuler(Rotation.x, Rotation.y, Rotation.z)); }
+
+	inline void SetCFrame(LuaCoordinateFrame NewPosition) {
+		Primitive->Position = NewPosition.Position;
+		Rotation = glm::eulerAngles(glm::quat_cast(NewPosition.Rotation));
+	}
+
 	inline double GetDistance() { return (double)Primitive->farPlane; }
 
 	inline void SetDistance(double NewDistance) {
@@ -94,6 +101,7 @@ public:
 
 auto propSpotLightPosition = CreatePropertyDescriptor(SpotLight, "SpotLight", "Position", LuaVector, L_Vector, &SpotLight::SetPosition, &SpotLight::GetPosition);
 auto propSpotLightRotation = CreatePropertyDescriptor(SpotLight, "SpotLight", "Rotation", LuaVector, L_Vector, &SpotLight::SetRotation, &SpotLight::GetRotation);
+auto propSpotLightCFrame = CreatePropertyDescriptor(SpotLight, "SpotLight", "CFrame", LuaCoordinateFrame, L_CFrame, &SpotLight::SetCFrame, &SpotLight::GetCFrame);
 auto propSpotLightColor = CreatePropertyDescriptor(SpotLight, "SpotLight", "Color", LuaVector, L_Vector, &SpotLight::SetColor, &SpotLight::GetColor);
 auto propSpotLightFOV = CreatePropertyDescriptor(SpotLight, "SpotLight", "FOV", double, L_Number, &SpotLight::SetFOV, &SpotLight::GetFOV);
 auto propSpotLightDistance = CreatePropertyDescriptor(SpotLight, "SpotLight", "Distance", double, L_Number, &SpotLight::SetDistance, &SpotLight::GetDistance);

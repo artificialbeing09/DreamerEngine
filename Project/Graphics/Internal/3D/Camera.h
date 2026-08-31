@@ -59,6 +59,10 @@ namespace Graphics::Engine3D::Camera {
         return glm::lookAt(Position, Position + DirectionFromEuler(Rotation.x, Rotation.y, Rotation.z), glm::vec3(0.0f, 1.0f, 0.0f));
     }
 
+    glm::mat4 CalculateRotation() {
+        return Gl.DirectionFromEuler(Rotation.x, Rotation.y, Rotation.z);
+    }
+
     // Retrieved from Camera.Far, Camera.Close, and Camera.FOVY
     glm::mat4 CalculateProjection() {
         if (Gl.h == 0)

@@ -500,6 +500,58 @@ namespace Studio {
                             PropertyInfo->SetFunction(SelectedObject, &NewVec);
                         }
                     }
+                    else if (PropertyInfo->Type == L_CFrame) {
+                        LuaCoordinateFrame* CurrentTextC = (LuaCoordinateFrame*)PropertyInfo->GetFunction(SelectedObject);
+                        glm::vec3* CurrentText = &CurrentTextC->Position;
+
+                        string VectorString = "";
+                        VectorString.reserve(256); // Will crash if this isn't there
+
+                        VectorString += to_string(CurrentText->x) + ", ";
+                        VectorString += to_string(CurrentText->y) + ", ";
+                        VectorString += to_string(CurrentText->z) + "";
+
+                        memcpy(PropertyValueStorage, VectorString.c_str(), 255);
+                        PropertyValueStorage[255] = 0;
+
+                        if (ImGui::InputText(("###" + i.first).c_str(), PropertyValueStorage, 256, ImGuiInputTextFlags_EnterReturnsTrue)) {
+                            vector<double> Lista = {};
+
+                            string MadeNumber = "";
+
+                            for (int i = 0; i < strlen(PropertyValueStorage); i++) {
+                                char CurrentCharacter = PropertyValueStorage[i];
+
+                                if (CurrentCharacter == ',') {
+                                    double Num = 0;
+
+                                    try { Num = stod(MadeNumber); }
+                                    catch (exception& e) {}
+
+                                    Lista.push_back(Num);
+
+                                    MadeNumber = "";
+                                }
+                                else if ((CurrentCharacter >= '0' && CurrentCharacter <= '9') || CurrentCharacter == '.') {
+                                    MadeNumber += CurrentCharacter;
+                                }
+                            }
+
+                            LuaCoordinateFrame NewVec = { };
+
+                            for (int K = 0; K < Lista.size(); K++)
+                                if (K == 0)
+                                    NewVec.Position.x = Lista[K];
+                                else if (K == 1)
+                                    NewVec.Position.y = Lista[K];
+                                else if (K == 2)
+                                    NewVec.Position.z = Lista[K];
+
+
+
+                            PropertyInfo->SetFunction(SelectedObject, &NewVec);
+                        }
+                    }
                     else if (PropertyInfo->Type == L_Int) {
                         int64_t* CurrentText = (int64_t*)PropertyInfo->GetFunction(SelectedObject);
 

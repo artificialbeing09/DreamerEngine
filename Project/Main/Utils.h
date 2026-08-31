@@ -103,11 +103,21 @@ namespace Utils {
         return ((value + increment / 2) / increment) * increment;
     }
 
+    
+
     auto GetMilliseconds() {
         auto duration = chrono::system_clock::now().time_since_epoch();
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
         return millis;
+    }
+
+    auto ProcessStartMilli = GetMilliseconds();
+
+    float GetSecondsSinceStart() {
+        auto MillisecondsSinceStart = GetMilliseconds() - ProcessStartMilli;
+
+        return (MillisecondsSinceStart) / 1000.0;
     }
 
     namespace FrameRate {

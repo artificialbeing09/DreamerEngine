@@ -17,11 +17,6 @@ int main()
     // Bug/performance
 
     // TODO: Fix performance issues with ray casting
-    // TODO: Add a system that stores objects permanently on the GPU and only change when object is changed (save memory transfer slowness)
-    //       -  render re-ordering be completely on the GPU because of the way objects are stored currently (compute shader)
-    //       -  a system to detect changes in the object primitive (add a call back maybe)
-    //       -  have the object data buffer be seperated through the objects with no changes in a set amount of time vs with
-    //       -  have it be specifically and non-memory efficiently garbage collected so that cpu/gpu time is the least with it
     
     // Minor bugs
 
@@ -31,11 +26,10 @@ int main()
     
     // Features
 
-    // TODO: Test CFrames
-    // TODO: Add selectionboxes and particles
     // TODO: Add move, rotate, scale, part insert plugins
     // TODO: Actually improve lights
     //       -  spot light is a circle, add point lights and diff shaped lights
+    // TODO: Add actual selection box
     // TODO: Working (optimized) physics (fuck nah)
     // TODO: GUI on a surface
     //       -  options for facing certain directions (at camera, etc) (like billboard gui)

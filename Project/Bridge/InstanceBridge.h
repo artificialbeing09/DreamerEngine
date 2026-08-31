@@ -393,6 +393,7 @@ namespace InstanceBridge {
 
 	int lua_initInstance(lua_State* L) {
 		Vector::luaopen_vector(L);
+		CoordinateFrame::luaopen_vector(L);
 		LuaEvent::luaopen_event(L);
 		return luaopen_Instance(L);
 	}

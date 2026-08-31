@@ -84,6 +84,8 @@ namespace Graphics::Engine3D {
             glClear(GL_DEPTH_BUFFER_BIT);
         }
 
+        
+
         /*3D*/ {
             TC.join();
 
@@ -100,6 +102,17 @@ namespace Graphics::Engine3D {
             }
             glDepthMask(GL_TRUE);
         }
+
+        /*Particles*/ {
+            vector<ParticleObject_t> ParticleList = {};
+
+            for (const auto& Particle : Particles) {
+                ParticleList.push_back(Particle);
+            }
+
+            RenderParticles(ParticleList);
+        }
+
 
         PostRender();
 	}

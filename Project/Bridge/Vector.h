@@ -30,6 +30,10 @@ LuaVector luaL_checkvector(lua_State* L, int index) {
     return *(LuaVector*)luaL_checkudata(L, index, "Vector");
 }
 
+bool lua_isvector(lua_State* L, int index) {
+    return luaL_testudata(L, index, "Vector");
+}
+
 namespace Vector {
     static int l_Vector_new(lua_State* L) {
         double X = lua_tonumber(L, 1);
@@ -213,6 +217,10 @@ LuaCoordinateFrame luaL_checkcoordinateframe(lua_State* L, int index) {
     return *(LuaCoordinateFrame*)luaL_checkudata(L, index, "CoordinateFrame");
 }
 
+bool lua_iscoordinateframe(lua_State* L, int index) {
+    return luaL_testudata(L, index, "CoordinateFrame");
+}
+
 namespace CoordinateFrame {
     static int lookAt(lua_State* L) {
         LuaVector camera = luaL_checkvector(L, 1);
@@ -242,14 +250,28 @@ namespace CoordinateFrame {
     static int l_Vector_new(lua_State* L) {
         LuaCoordinateFrame Created;
 
-        double X = lua_tonumber(L, 1);
-        double Y = lua_tonumber(L, 2);
-        double Z = lua_tonumber(L, 3);
-        
-        Created.Position.x = X;
-        Created.Position.y = Y;
-        Created.Position.z = Z;
+        if (lua_isvector(L, 1) && lua_isvector(L, 2) && lua_gettop(L) == 2) {
+            return lookAt(L);
+        }
+        else if (lua_isvector(L, 1) && lua_gettop(L) == 1) {
+            auto V = luaL_checkvector(L, 1);
 
+            Created.Position = glm::vec3(V.x, V.y, V.z);
+        }
+        else if (lua_isnumber(L, 1) && lua_isnumber(L, 2) && lua_isnumber(L, 3) && lua_gettop(L) == 3) {
+            double X = lua_tonumber(L, 1);
+            double Y = lua_tonumber(L, 2);
+            double Z = lua_tonumber(L, 3);
+
+            Created.Position.x = X;
+            Created.Position.y = Y;
+            Created.Position.z = Z;
+        }
+        else {
+            luaL_error(L, "Invalid parameters passed to CFrame.new");
+
+            return 0;
+        }
         lua_pushcoordinateframe(L, Created);
         return 1;
     }
@@ -459,10 +481,37 @@ namespace CoordinateFrame {
         return 1;
     }
 
+    static int fromComponents(lua_State* L) {
+        double X = luaL_checknumber(L, 1);
+        double Y = luaL_checknumber(L, 2);
+        double Z = luaL_checknumber(L, 3);
+
+        double R00 = luaL_checknumber(L, 4);
+        double R01 = luaL_checknumber(L, 5);
+        double R02 = luaL_checknumber(L, 6);
+
+        double R10 = luaL_checknumber(L, 7);
+        double R11 = luaL_checknumber(L, 8);
+        double R12 = luaL_checknumber(L, 9);
+
+        double R20 = luaL_checknumber(L, 10);
+        double R21 = luaL_checknumber(L, 11);
+        double R22 = luaL_checknumber(L, 12);
+
+        LuaCoordinateFrame obj;
+        obj.Position = glm::vec3(X, Y, Z);
+        obj.Rotation = glm::mat3(R00, R01, R02, R10, R11, R12, R20, R21, R22);
+
+        lua_pushcoordinateframe(L, obj);
+
+        return 1;
+    }
+
     static const luaL_Reg cframelib[] = {
         {"new",   l_Vector_new},
         {"lookAt",   lookAt},
         {"fromAngles",   fromAngles},
+        {"fromComponents", fromComponents},
         {NULL, NULL}
     };
 
