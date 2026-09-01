@@ -6,6 +6,7 @@
 namespace Graphics::Engine3D {
     map<string, vector<RenderCubeObject_t>> FilteredRenderObjects = { };
     map<string, vector<RenderCubeObject_t>> FilteredTransparentRenderObjects = { };
+    vector<ParticleObject_t> SortedParticles = {};
 
     void MidCalculations() {
         auto Planes = Camera::ExtractFrustumPlanes();
@@ -104,13 +105,30 @@ namespace Graphics::Engine3D {
         }
 
         /*Particles*/ {
-            vector<ParticleObject_t> ParticleList = {};
+            glDepthMask(GL_FALSE);
+            auto Planes = Camera::ExtractFrustumPlanes();
+            glm::vec3 CameraPos = Camera::Position;
 
-            for (const auto& Particle : Particles) {
-                ParticleList.push_back(Particle);
+            SortedParticles.clear();
+
+            SortedParticles.reserve(Particles.size());
+
+            for (auto L : Particles) {
+                if (!Camera::IsSphereVisible(L.Position, L.Scale * 1.42, Planes))
+                    continue;
+
+                glm::vec3 toCamera = L.Position - CameraPos;
+                float distSq = glm::dot(toCamera, toCamera);
+                L.Pad = distSq;
+
+                SortedParticles.push_back(L);
             }
 
-            RenderParticles(ParticleList);
+            std::sort(SortedParticles.begin(), SortedParticles.end(),
+                [](const auto a, const auto b) { return a.Pad > b.Pad; });
+
+            RenderParticles(SortedParticles);
+            glDepthMask(GL_TRUE);
         }
 
 

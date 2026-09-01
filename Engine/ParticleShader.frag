@@ -12,22 +12,12 @@ void main()
 {
     uint tex = selectedTex;
 
-    vec4 image = color;
+    fragment = color;
 
     if (tex != 0) {
         uint samplerNumber = int(tex / 2048);
         uint samplerTexture = tex % 2048;
-        image = texture(Textures[samplerNumber], vec3(TexCoords, samplerTexture));
+        fragment = texture(Textures[samplerNumber], vec3(TexCoords, samplerTexture));
+        fragment *= color;
     }
-
-    float t = image.w + ((1.0 - image.w) * color.w);
-    vec3 mixedColor = ((image.xyz * image.w) + (color.xyz * (1.0 - image.w) * color.a));
-    
-    vec4 result = vec4(mixedColor, t);
-
-    if (color.w > 0.99) {
-        result.w = 1.0;
-    }
-
-    fragment = result;
 }  

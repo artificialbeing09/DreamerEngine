@@ -7,7 +7,7 @@ struct renderObject {
     vec4 color;
     uint tex;
     float cornerSize;
-    uint pad[2];
+    uint pad0[2];
 };
 
 layout(std430, binding = 5) buffer InstanceData {

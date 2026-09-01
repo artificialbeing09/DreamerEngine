@@ -38,7 +38,7 @@ namespace Texture {
         TextureImage ImgB
     ) {
         if (ImgA.Channels != ImgB.Channels) {
-            cout << "wuh oh mommy didnt like that" << endl;
+            cout << "the thing that used to be here... idk why i wrote it and it was incredibly weird. i think my manager at work reviewing this might've seen it but still chose to hire me. " << endl;
 
             return TextureImage(0, 0, 0, 0);
         }
@@ -108,6 +108,20 @@ namespace Texture {
         return TextureImage(Image.Width, Image.Height, 4, rgba);
     }
 
+    TextureImage Convert3ChannelTo4(TextureImage Image, bool DeleteImage = false) {
+        unsigned char* rgba = (unsigned char*)malloc(Image.Height * Image.Width * 4);
+        for (int i = 0; i < Image.Width * Image.Height; i += 3) {
+            rgba[i * 4 + 0] = Image.RawData[i];  // R
+            rgba[i * 4 + 1] = Image.RawData[i + 1];  // G
+            rgba[i * 4 + 2] = Image.RawData[i + 2];  // B
+            rgba[i * 4 + 3] = 255; // A (opaque)
+        }
+
+        if (DeleteImage)
+            Image.Delete();
+
+        return TextureImage(Image.Width, Image.Height, 4, rgba);
+    }
     TextureImage ResizeTexture(TextureImage Image, size_t Width, size_t Height, bool DeleteImage = false) {
         unsigned char* ResizedData = new unsigned char[Width * Height * Image.Channels];
 
@@ -466,7 +480,7 @@ namespace Texture {
             );
         }
 
-        if (DeleteImage) {
+        if (DeleteTex) {
             Image.Delete();
         }
 
@@ -503,6 +517,16 @@ namespace Texture {
                 for (int I = 0; I < TextureName.size(); I++)
                     if (TextureName[I] == '\\')
                         TextureName[I] = '/';
+
+                if (Image.Channels == 1) {
+                    Image = Convert1ChannelTo4(Image, true);
+                }
+                else if (Image.Channels == 3) {
+                    Image = Convert3ChannelTo4(Image, true);
+                }
+                else if (Image.Channels != 4) {
+                    cout << "Channels: " << Image.Channels << endl;
+                }
                 
                 AddTexture(TextureName, Image, true);
             }

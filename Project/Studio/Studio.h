@@ -478,7 +478,7 @@ namespace Studio {
 
                                     MadeNumber = "";
                                 }
-                                else if ((CurrentCharacter >= '0' && CurrentCharacter <= '9') || CurrentCharacter == '.') {
+                                else if ((CurrentCharacter >= '0' && CurrentCharacter <= '9') || CurrentCharacter == '-' || CurrentCharacter == '.') {
                                     MadeNumber += CurrentCharacter;
                                 }
                             }

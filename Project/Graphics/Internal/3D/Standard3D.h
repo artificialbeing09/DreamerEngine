@@ -57,17 +57,32 @@ struct RenderLightObject_t {
     glm::vec3 Color = glm::vec3(1.0f, 1.0f, 1.0f);
 };
 
+struct ParticleExtraInfo_t {
+    float Lifetime = 1.0;
+    float Rate = 1.0;
+    float TimeStart = 0.0;
+    float Scale = 1.0;
+    glm::vec3 StartRand = glm::vec3(0.0);
+    glm::vec3 DiffRand = glm::vec3(0.0);
+    glm::vec3 Velocity = glm::vec3(0.0);
+    glm::vec3 Acceleration = glm::vec3(0.0);
+    glm::vec4 Color = glm::vec4(1.0);
+    glm::vec4 EndColor = glm::vec4(1.0);
+    glm::vec3 Position = glm::vec3(0.0);
+    uint32_t Texture = 0;
+};
+
+struct ParticleObjectExtra_t {
+    glm::vec3 Velocity = glm::vec3(0.0);
+};
+
 struct ParticleObject_t {
     glm::vec3 Position = glm::vec3(0.0);
     uint32_t Texture = 0;
-    glm::vec4 Color = glm::vec4(0.0);
-    glm::vec3 Velocity = glm::vec3(0.0);
-    float TimeStart = 0.0;
-    glm::vec3 Acceleration = glm::vec3(0.0);
-    float TimeEnd = 10000000000.0;
-    float Lifetime = 0.0;
-    float RateOffset = 0.0;
-    void* Storage; // Used for cataloguing
+    glm::vec4 Color = glm::vec4(1.0);
+    void* Storage;
+    float Scale;
+    float Pad;
 };
 
 struct RenderObjectStore_t {
@@ -217,7 +232,7 @@ namespace Graphics::Engine3D {
 
     map<string, deque<RenderObjectStore_t>> RenderObjects;
     deque<LightObjectStore_t> Lights = {  }; //{glm::vec3(12.0f, 40.0f, 12.0f)}, {}
-    deque<ParticleObject_t> Particles = { };
+    vector<ParticleObject_t> Particles = { };
     RenderLightObject_t RenderLights[20];
 
     unsigned int defaultFBO = 0;

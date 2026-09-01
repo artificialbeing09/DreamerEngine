@@ -16,16 +16,20 @@ int main()
 
     // Bug/performance
 
-    // TODO: Fix performance issues with ray casting
+    // None
     
     // Minor bugs
-
+    // 
     // TODO: Weird studio ui locations every time it's opened
+    // TODO: Stop key inputs from being registered by lua scripts when the ImGUI interface is being interacted with
     // TODO: Studio GUI objects not having the correct mouse cursor position
     // TODO: Skybox orientation may be incorrect
     
     // Features
 
+    // TODO: Fix mouse position in studio
+    // TODO: Fix performance issues with ray casting
+    //       - make BVH table
     // TODO: Add move, rotate, scale, part insert plugins
     // TODO: Actually improve lights
     //       -  spot light is a circle, add point lights and diff shaped lights
@@ -97,10 +101,11 @@ int main()
         Graphics::Engine3D::Camera::CameraStep();
 
         if (Studio::Running) {
-            //Physics::SimulateCubes();
+            Physics::SimulateCubes();
         }
 
-        //InputFrameFunction(InputService.get());
+
+        InputFrameFunction(InputService.get());
         PreTextObjectFunction();
 
 		for (auto o : SceneUI->GetDescendants()) {
@@ -108,6 +113,8 @@ int main()
 				TextObjectFrameFunction(o.get());
 			}
 		}
+
+        UpdateParticles();
 
         Scheduler::SchedulerStep();
         

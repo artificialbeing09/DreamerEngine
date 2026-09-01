@@ -459,8 +459,10 @@ namespace CoordinateFrame {
 
     static int l_Vector_tostring(lua_State* L) {
         LuaCoordinateFrame obj = luaL_checkcoordinateframe(L, 1);
+        auto euler = glm::eulerAngles(glm::quat_cast(obj.Rotation));
 
-        string S = to_string(obj.Position.x) + ", " + to_string(obj.Position.y) + ", " + to_string(obj.Position.z);
+        string S = to_string(obj.Position.x) + ", " + to_string(obj.Position.y) + ", " + to_string(obj.Position.z) + ", " + 
+            to_string(euler.x) + ", " + to_string(euler.y) + ", " + to_string(euler.z);
 
         lua_pushstring(L, S.c_str());
 

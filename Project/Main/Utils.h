@@ -146,6 +146,8 @@ namespace Utils {
             std::chrono::time_point<std::chrono::steady_clock, decltype(time_between_frames)> tp;
         };
 
+        float FrameRate = 60.0;
+
         frame_rater<60> fr;
 
         int Count = 0;

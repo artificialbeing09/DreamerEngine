@@ -39,7 +39,7 @@ public:
     int width, height; // true width/height
     int w, h; // stored width/height
 
-    static inline bool KeysDown[400]; // Also used for mouse input
+    static inline bool KeysDown[2000]; // Also used for mouse input
 
     void Initialize() {
         if (!glfwInit()) {

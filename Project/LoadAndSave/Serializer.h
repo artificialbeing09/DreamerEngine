@@ -85,6 +85,22 @@ namespace Serializer {
 
                 ObjectInfo += "\"" + VectorString + "\"";
             }
+            else if (PropertyInfo->Type == L_CFrame) {
+                LuaCoordinateFrame* CurrentText = (LuaCoordinateFrame*)i.second->GetFunction(Object);
+
+                auto euler = glm::eulerAngles(glm::quat_cast(CurrentText->Rotation));
+
+                string VectorString = "";
+
+                VectorString += to_string(CurrentText->Position.x) + ",";
+                VectorString += to_string(CurrentText->Position.y) + ",";
+                VectorString += to_string(CurrentText->Position.z) + ",";
+                VectorString += to_string(euler.x) + ",";
+                VectorString += to_string(euler.y) + ",";
+                VectorString += to_string(euler.z) + ";";
+
+                ObjectInfo += "\"" + VectorString + "\"";
+            }
             else if (PropertyInfo->Type == L_Int) {
                 int64_t* CurrentText = (int64_t*)i.second->GetFunction(Object);
 
@@ -263,6 +279,30 @@ namespace Serializer {
                         }
 
                         Value = { ValueVector[0], ValueVector[1], ValueVector[2], ValueVector[3] };
+
+                        PropertyInfo->SetFunction(CurrentInstance, &Value);
+                    }
+                    else if (PropertyInfo->Type == L_CFrame) {
+                        string DecodedNumberStr = "";
+
+                        LuaCoordinateFrame Value = { };
+
+                        vector<double> ValueVector = { };
+
+                        for (int J = 0; J < PropertyValue.size(); J++) {
+                            char FoundCharacter = PropertyValue[J];
+
+                            if (FoundCharacter == ',' || FoundCharacter == ';') {
+                                ValueVector.push_back(stod(DecodedNumberStr));
+                                DecodedNumberStr = "";
+                            }
+                            else {
+                                DecodedNumberStr += FoundCharacter;
+                            }
+                        }
+
+                        Value.Position = { ValueVector[0], ValueVector[1], ValueVector[2] };
+                        Value.Rotation = Gl.DirectionFromEuler(ValueVector[3], ValueVector[4], ValueVector[5]);
 
                         PropertyInfo->SetFunction(CurrentInstance, &Value);
                     }
