@@ -261,7 +261,7 @@ void InputFrameFunction(Input* InputService) {
     static bool KeysDown[400];
 
     double x = ((2.0 * Gl.MouseX) / (double)Gl.w) - 1.0;
-    double y = 1.0 - ((2.0 * Gl.MouseY) / (double)Gl.h);
+    double y = 1.0 - ((2.0 * (Gl.h - Gl.MouseY)) / (double)Gl.h);
     double z = 1.0;
     glm::vec3 ray_nds = glm::vec3(x, y, z);
     glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);

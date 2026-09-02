@@ -16,21 +16,23 @@ int main()
 
     // Bug/performance
 
-    // None
+    // Studio: Crash if selecting an object, having that object be deleted, then selecting another object
     
     // Minor bugs
     // 
-    // TODO: Weird studio ui locations every time it's opened
+    // Ctrl + S to save a script or map
     // TODO: Stop key inputs from being registered by lua scripts when the ImGUI interface is being interacted with
-    // TODO: Studio GUI objects not having the correct mouse cursor position
     // TODO: Skybox orientation may be incorrect
     
     // Features
 
-    // TODO: Fix mouse position in studio
     // TODO: Fix performance issues with ray casting
     //       - make BVH table
     // TODO: Add move, rotate, scale, part insert plugins
+    // TODO: Improve Engine UI (mainly text)
+    // TODO: Improve particles
+    //       - add randomized position around a range (size)
+    // 
     // TODO: Actually improve lights
     //       -  spot light is a circle, add point lights and diff shaped lights
     // TODO: Add actual selection box
@@ -74,8 +76,8 @@ int main()
 
     int i = 0;
 
-	int LastHeight = Gl.height;
-	int LastWidth = Gl.width;
+	int LastHeight = Gl.h;
+	int LastWidth = Gl.w;
 
     auto Game = GetGameWorld(); // So that it's never dereferenced
 
@@ -92,11 +94,8 @@ int main()
             Studio::RefreshFrame();
         }
         else {
-            Gl.w = Gl.width;
-            Gl.h = Gl.height;
+            Gl.w = Gl.width; Gl.h = Gl.height;
         }
-
-        Gl.MouseY = Gl.h - Gl.MouseY;
 
         Graphics::Engine3D::Camera::CameraStep();
 

@@ -50,7 +50,7 @@ public:
             return;
         }
 
-        window = glfwCreateWindow(1000, 1000, "3d game engine", 0, 0);
+        window = glfwCreateWindow(1000, 1000, "Dreamer Engine", 0, 0);
         glfwMakeContextCurrent(window);
 
         auto glewValue = glewInit();
@@ -78,8 +78,9 @@ public:
     void PreRender() {
         glfwMakeContextCurrent(window);
         glfwGetFramebufferSize(window, &width, &height);
-        glViewport(0, 0, width, height);
+        glViewport(0, 0, w, h);
         glfwGetCursorPos(window, &MouseX, &MouseY);
+        MouseY = height - MouseY;
 
         glClearColor(0.0, 0.5, 1.0, 1.0);
 
@@ -94,7 +95,7 @@ public:
     void SetMousePos(double NewMouseX, double NewMouseY) {
         MouseX = NewMouseX;
         MouseY = NewMouseY;
-        glfwSetCursorPos(window, NewMouseX, NewMouseY);
+        glfwSetCursorPos(window, NewMouseX, height - NewMouseY);
     }
 
     // Type types
