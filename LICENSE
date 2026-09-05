@@ -1,0 +1,184 @@
+# Non-Commercial, No-AI Source-Available License
+
+Copyright (c) 2026 Charles Richards
+
+All rights reserved.
+
+## 1. Definitions
+
+For purposes of this License:
+
+**"Software"** means the source code, object code, binaries, documentation, assets, configuration files, examples, and other materials distributed by the Copyright Holder under this License.
+
+**"Copyright Holder"** means the person or entity identified in the copyright notice above, together with any person or entity expressly authorized by the Copyright Holder to grant rights under this License.
+
+**"You"** means an individual or legal entity exercising rights granted by this License.
+
+**"Derivative Work"** means a work based upon, incorporating, modifying, adapting, translating, or otherwise substantially incorporating the Software or any portion thereof.
+
+**"Commercial Use"** means any use primarily intended for or directed toward commercial advantage, monetary compensation, financial gain, revenue generation, or the operation of a business or commercial service.
+
+Commercial Use includes, without limitation:
+
+* selling the Software or a Derivative Work;
+* using the Software in a product or service offered for payment;
+* using the Software to generate revenue;
+* using the Software in the operation of a commercial business or service;
+* offering the Software or a Derivative Work as part of a paid service;
+* using the Software to advertise, promote, or facilitate commercial products or services; and
+* using the Software on behalf of a commercial organization where the use is directly related to that organization's commercial activities.
+
+**"AI System"** means any artificial intelligence, machine-learning, neural-network, generative-AI, large-language-model, multimodal model, or other computational system designed to learn patterns, representations, or behavior from data.
+
+**"AI Training"** means using the Software or any portion of it as training data, fine-tuning data, preference data, evaluation data, benchmark data, retrieval data, or other data used to develop, train, fine-tune, evaluate, improve, or otherwise create or modify an AI System.
+
+## 2. Grant of License
+
+Subject to the terms and conditions of this License, the Copyright Holder grants You a limited, worldwide, royalty-free, non-exclusive, non-transferable license to:
+
+1. view and inspect the Software;
+2. use the Software for personal, private, hobbyist, or educational purposes;
+3. modify the Software;
+4. create Derivative Works for permitted non-commercial purposes;
+5. compile the Software and Derivative Works; and
+6. privately share the Software and Derivative Works with other individuals for permitted non-commercial purposes.
+
+This license grant applies only to uses that comply with all provisions of this License.
+
+## 3. Non-Commercial Restriction
+
+You may not use the Software or any Derivative Work for Commercial Use.
+
+You may not:
+
+1. sell the Software or a Derivative Work;
+2. charge a fee for access to the Software or a Derivative Work;
+3. incorporate the Software into a commercial product or service;
+4. use the Software to provide a commercial service;
+5. use the Software to generate revenue;
+6. use the Software as part of a commercial business operation; or
+7. otherwise use the Software for a commercial purpose.
+
+If You wish to use the Software for a purpose prohibited by this Section, You must obtain a separate written license from the Copyright Holder.
+
+## 4. Prohibition on Artificial Intelligence and Machine Learning Use
+
+You may not use the Software or any portion thereof for AI Training.
+
+Without limiting the foregoing, You may not:
+
+1. include the Software in a dataset intended for AI Training;
+2. use the Software as training or fine-tuning data;
+3. use the Software to train, fine-tune, or improve an AI System;
+4. use the Software to create embeddings or representations intended to train or improve an AI System;
+5. use the Software as an evaluation or benchmark dataset where the purpose is to develop or improve an AI System;
+6. scrape, crawl, collect, or systematically extract the Software for the purpose of AI Training;
+7. redistribute the Software as part of an AI-training dataset; or
+8. authorize or facilitate any third party to perform any of the above activities.
+
+This restriction applies regardless of whether the AI System or AI Training is commercial or non-commercial.
+
+## 5. Derivative Works
+
+You may modify the Software and create Derivative Works for permitted non-commercial purposes.
+
+If You distribute a Derivative Work, You must:
+
+1. clearly identify that the work is derived from the Software;
+2. retain all existing copyright notices;
+3. retain a copy of this License;
+4. identify significant modifications made to the Software; and
+5. distribute the Derivative Work under this same License.
+
+You may not remove or alter copyright notices belonging to the Copyright Holder.
+
+## 6. Redistribution
+
+You may redistribute unmodified copies of the Software for permitted non-commercial purposes provided that:
+
+1. this License is included with the Software;
+2. all copyright notices are preserved;
+3. You do not charge a fee for the Software itself; and
+4. the recipient receives the same rights and restrictions provided by this License.
+
+You may not redistribute the Software under terms that grant rights broader than those provided by this License.
+
+## 7. No Sublicensing
+
+You may not sublicense, transfer, or otherwise grant third parties rights to the Software beyond those expressly granted by this License.
+
+## 8. Commercial Licensing
+
+The restrictions in this License do not prevent the Copyright Holder from granting separate commercial licenses.
+
+A person or organization wishing to use the Software commercially may contact the Copyright Holder to request a separate commercial license.
+
+The Copyright Holder may grant such licenses at its sole discretion and under terms separately agreed upon by the parties.
+
+## 9. Copyright
+
+The Software remains the property of the Copyright Holder.
+
+This License does not transfer ownership of the Software or any intellectual-property rights to You.
+
+Except for the limited rights expressly granted by this License, all rights are reserved by the Copyright Holder.
+
+## 10. Trademarks
+
+This License does not grant permission to use any trademarks, service marks, logos, trade names, or branding belonging to the Copyright Holder.
+
+Such rights require separate permission from the applicable rights holder.
+
+## 11. Third-Party Components
+
+This License applies only to material owned or controlled by the Copyright Holder.
+
+Third-party software, libraries, assets, or other materials included with or distributed alongside the Software may be subject to their own licenses.
+
+Nothing in this License overrides or replaces the terms of a third-party license.
+
+## 12. No Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE COPYRIGHT HOLDER DISCLAIMS ALL WARRANTIES, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, AND FREEDOM FROM DEFECTS.
+
+YOU USE THE SOFTWARE ENTIRELY AT YOUR OWN RISK.
+
+## 13. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE COPYRIGHT HOLDER SHALL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR OTHER DAMAGES ARISING FROM OR RELATED TO THE SOFTWARE OR THIS LICENSE, INCLUDING LOSS OF DATA, PROFITS, REVENUE, BUSINESS, OR OTHER ECONOMIC LOSS.
+
+## 14. Termination
+
+Your rights under this License automatically terminate if You violate any provision of this License.
+
+Upon termination, You must cease all use, copying, modification, and distribution of the Software and any Derivative Works, except to the extent that applicable law requires otherwise.
+
+Rights that were properly granted before termination are not revived by subsequent possession or acquisition of another copy of the Software.
+
+## 15. No Circumvention
+
+You may not circumvent, disable, remove, or otherwise defeat technical measures implemented by the Copyright Holder for the purpose of enforcing the restrictions of this License.
+
+This provision does not require the Copyright Holder to implement technical measures or imply that technical measures can prevent all unauthorized use.
+
+## 16. Severability
+
+If any provision of this License is determined to be invalid, unlawful, or unenforceable, that provision shall be enforced to the maximum extent permitted by law, and the remaining provisions shall remain in effect.
+
+## 17. Entire Agreement
+
+This License constitutes the entire agreement concerning the rights granted to You regarding the Software, except for separate written agreements between You and the Copyright Holder.
+
+Any modification to this License must be made in writing and authorized by the Copyright Holder.
+
+## 18. Acceptance
+
+By exercising any rights granted by this License, You agree to be bound by its terms.
+
+If You do not agree to these terms, You may not use, modify, copy, distribute, or create Derivative Works from the Software.
+
+---
+
+**Copyright (c) 2026 Charles Richards. All rights reserved.**
