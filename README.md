@@ -1,6 +1,6 @@
 # Overview
 
-Dreamer Engine is currently a passion project solely created by me (Charles Richards).
+Dreamer Engine is currently a passion project solely created by me (Richards).
 It encompasses a lot of the skill I've developed in the past year in C++ coding.
 
 A TODO list is present in the main.cpp file.
